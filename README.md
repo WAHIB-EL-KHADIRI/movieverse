@@ -105,7 +105,11 @@ Details: `/movie/{id}`. Rating sort adds `vote_count.gte=200` so films with a ha
 
 ## Deployment
 
-The repo contains `vercel.json` and `public/_redirects` (SPA fallbacks for Vercel and Netlify). On either platform: import the repo, build command `npm run build`, output directory `dist`, and add the environment variable `VITE_TMDB_API_KEY`.
+Deployed on **Netlify**. `netlify.toml` already contains the build command (`npm run build`), the publish directory (`dist`), Node 22, the single-page-app redirect (so `/favorites` and `/movie/:id` survive a refresh) and basic security headers.
+
+1. Netlify → *Add new site* → *Import an existing project* → pick this GitHub repository (private repositories work once the Netlify GitHub app has access to it).
+2. Before the first deploy, add the environment variable `VITE_TMDB_API_KEY` (*Site configuration → Environment variables*). It is baked in at build time, so changing it requires a new deploy.
+3. Deploy. Every push to `main` redeploys automatically.
 
 ## Attribution
 

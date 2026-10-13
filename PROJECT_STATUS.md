@@ -62,7 +62,7 @@ Legend: PASS = verified by automated tests/commands listed; BLOCKED = needs some
 
 1. Get a free TMDB v3 key, put it in `.env`, run `npm run dev` and click through Trending → search → filters → details → favorites once against the real API.
 2. Create the GitHub repo and push (commands in the final report / below).
-3. Deploy on Vercel/Netlify with `VITE_TMDB_API_KEY` set.
+3. Deploy on Netlify (`netlify.toml` is ready) with `VITE_TMDB_API_KEY` set.
 
 ```bash
 git remote add origin https://github.com/<you>/movieverse.git
