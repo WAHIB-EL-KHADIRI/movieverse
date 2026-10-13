@@ -1,0 +1,53 @@
+import { useId } from 'react';
+import type { SortOption } from '../../types/movie';
+import { SORT_LABELS } from '../../utils/sorting';
+
+const FIRST_YEAR = 1950;
+
+interface Props {
+  year: string;
+  sort: SortOption;
+  searching: boolean;
+  onYearChange: (year: string) => void;
+  onSortChange: (sort: SortOption) => void;
+  onReset: () => void;
+}
+
+const SORT_OPTIONS: SortOption[] = ['default', 'popularity', 'rating', 'release'];
+
+export function FilterBar({ year, sort, searching, onYearChange, onSortChange, onReset }: Props) {
+  const yearId = useId();
+  const sortId = useId();
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear + 1 - FIRST_YEAR + 1 }, (_, i) => String(currentYear + 1 - i));
+  const dirty = year !== '' || sort !== 'default';
+
+  return (
+    <div className="filters" role="group" aria-label="Filters and sorting">
+      <div className="field">
+        <label htmlFor={yearId}>Release year</label>
+        <select id={yearId} value={year} onChange={(e) => onYearChange(e.target.value)}>
+          <option value="">Any year</option>
+          {years.map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="field">
+        <label htmlFor={sortId}>Sort by</label>
+        <select id={sortId} value={sort} onChange={(e) => onSortChange(e.target.value as SortOption)}>
+          {SORT_OPTIONS.map((o) => (
+            <option key={o} value={o}>
+              {o === 'default' ? (searching ? 'Best match' : 'Trending') : SORT_LABELS[o]}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button type="button" className="btn btn--ghost" onClick={onReset} disabled={!dirty}>
+        Reset filters
+      </button>
+    </div>
+  );
+}

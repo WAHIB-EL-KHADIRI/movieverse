@@ -1,0 +1,70 @@
+# PROJECT_STATUS
+
+Verified on Node 22 / npm 10. Last full run: `typecheck` (0 errors), `lint` (0 errors), `vitest` (9 files, 98 tests, all passed), `vite build` (success).
+
+**Important limit of verification:** no real TMDB key was available, so nothing was exercised against the live TMDB API. All API behaviour is verified against an MSW mock whose shapes follow the TMDB docs. Status values below say so explicitly.
+
+Legend: PASS = verified by automated tests/commands listed; BLOCKED = needs something I do not have.
+
+## Mandatory requirements
+
+| # | Requirement | Status | Evidence / tests |
+|---|---|---|---|
+| A | Trending page: cards with poster, title, rating, release date | PASS (mocked API) | `TrendingPage.test.tsx` "shows a loading state, then movie cards…"; `components.test.tsx` MovieCard |
+| A | Loading / error / empty states | PASS (mocked API) | Trending tests: skeleton, error + retry, empty, missing API key message |
+| B | Search by title | PASS (mocked API) | "debounces: typing a word fires a single request…" |
+| B | Real debounce (400 ms) | PASS | `useDebounce.test.ts` (fake timers) + page test (0 requests while typing, 1 after) |
+| B | No request for blank text | PASS | "does not search for blank input" |
+| B | No-results message | PASS | "shows a helpful empty state when nothing matches" |
+| B | Old requests aborted / stale results ignored | PASS | "never shows stale results…" (slow "alpha" response arrives after "beta"); `tmdb.test.ts` abort test |
+| C | Filter by year | PASS (mocked API) | "filters by release year using the API and can be reset" |
+| C | Sort by Popularity / Rating / Release date | PASS (mocked API) | `it.each` page tests, `tmdb.test.ts` sort_by mapping, `sorting.test.ts` |
+| D | Details: poster, title, overview, genres, runtime, rating, favorite button | PASS (mocked API) | `MovieDetailsPage.test.tsx` |
+| D | Invalid ID / load errors | PASS | invalid-ID (no request), 404, retryable error tests |
+| E | Favorites page, localStorage, persistence after reload | PASS | `FavoritesPage.test.tsx` ("survives a reload" re-mounts the whole app on same storage) |
+| E | Remove; cross-page sync; corrupted/unavailable storage | PASS | same file + `storage.test.ts` |
+| F | React + Vite, Router, Hooks, reusable components, loading/error handling | PASS | `package.json`, `src/` layout, build succeeds |
+| H | README (install, API key, commands) | PASS | `README.md` |
+| H | Public GitHub repo (frontend only) | BLOCKED | Not pushed – needs your explicit action (see below). Local git repo prepared. |
+| H | Live demo (optional) | BLOCKED | Not deployed. |
+
+## Bonuses
+
+| Bonus | Status | Evidence |
+|---|---|---|
+| Skeleton loading | PASS | `LoadingSkeleton.tsx`, asserted in Trending/Details tests |
+| Responsive design | NOT VERIFIED visually | CSS grid + breakpoints written; no browser screenshot/device test was run |
+| Pagination | PASS (mocked API) | "paginates with Load more and stops at the last page" (also de-duplicates) |
+| Dark mode | PASS (code) | Dark default + light toggle persisted in localStorage; toggle itself has no automated test |
+
+## Acceptance checks
+
+| Check | Result |
+|---|---|
+| `npm run typecheck` | 0 errors |
+| `npm run lint` | 0 errors, 0 warnings |
+| `npm test` | 98 / 98 passed |
+| `npm run build` | success |
+| `npm audit` | 0 vulnerabilities |
+| Secrets in files to deliver | none; `.env` is git-ignored, `.env.example` has a placeholder |
+| Trending / Details with the **real** TMDB | BLOCKED – needs your API key |
+
+## Known issues / caveats
+
+- One test (`MovieDetailsPage` first test) failed once in a loaded full-suite run before I made its `document.title` assertion wait for the effect. I did not capture that failure's message, so the cause is my best hypothesis, not proven. Since the change, 6 consecutive full runs plus the final run passed.
+- Sorting of **search** results is client-side over loaded pages only (TMDB `/search` has no sort); the UI says so.
+- No Playwright E2E tests; no visual/cross-browser check; accessibility is by construction and RTL role queries, not an audit tool run.
+- Real-API field assumptions (e.g. `/discover` params, `/trending/movie/week` shape) come from TMDB docs/knowledge, not from a live response.
+- No LICENSE file: license choice is yours.
+- No CI workflow added.
+
+## Needs manual action
+
+1. Get a free TMDB v3 key, put it in `.env`, run `npm run dev` and click through Trending → search → filters → details → favorites once against the real API.
+2. Create the GitHub repo and push (commands in the final report / below).
+3. Deploy on Vercel/Netlify with `VITE_TMDB_API_KEY` set.
+
+```bash
+git remote add origin https://github.com/<you>/movieverse.git
+git push -u origin main
+```
