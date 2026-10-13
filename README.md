@@ -3,7 +3,15 @@
 A fast, accessible movie-discovery app built with **React 19 + Vite + TypeScript**, powered by the public [TMDB API](https://developer.themoviedb.org/). Browse what's trending, search with debounce, filter by year, sort three ways, read details and keep a persistent list of favorites.
 
 > Frontend only. No backend, no database.
-> **Live demo:** not deployed yet (see [Deployment](#deployment)).
+> **Live demo:** <https://film2027.netlify.app/>
+
+![MovieVerse home with the trending hero](docs/screenshots/home.png)
+
+## Screenshots
+
+| Trending | Grid |
+| --- | --- |
+| ![Trending this week](docs/screenshots/trending.png) | ![Movie grid](docs/screenshots/grid.png) |
 
 ## Features
 
