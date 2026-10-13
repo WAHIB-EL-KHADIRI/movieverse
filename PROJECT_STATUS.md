@@ -47,7 +47,7 @@ Legend: PASS = verified by automated tests/commands listed; BLOCKED = needs some
 | `npm run build` | success |
 | `npm audit` | 0 vulnerabilities |
 | Secrets in files to deliver | none; `.env` is git-ignored, `.env.example` has a placeholder |
-| Trending / Details with the **real** TMDB | BLOCKED – needs your API key |
+| Real TMDB endpoints (`/trending`, `/discover` with year+rating sort, `/search`, `/movie/{id}`) | PASS – all returned HTTP 200 with the user's v3 key (curl). UI rendering against live data NOT yet checked by me in a browser |
 
 ## Known issues / caveats
 
