@@ -1,8 +1,11 @@
+import { useI18n } from '../../i18n/useI18n';
+
 export function MovieGridSkeleton({ count = 12 }: { count?: number }) {
+  const { t } = useI18n();
   return (
     <div aria-busy="true">
       <p className="sr-only" role="status">
-        Loading movies…
+        {t('loading.movies')}
       </p>
       <ul className="movie-grid" aria-hidden="true">
         {Array.from({ length: count }, (_, i) => (
@@ -18,10 +21,11 @@ export function MovieGridSkeleton({ count = 12 }: { count?: number }) {
 }
 
 export function DetailsSkeleton() {
+  const { t } = useI18n();
   return (
     <div className="details details--skeleton" aria-busy="true">
       <p className="sr-only" role="status">
-        Loading movie details…
+        {t('loading.details')}
       </p>
       <div className="details__inner" aria-hidden="true">
         <div className="skeleton skeleton--poster details__poster" />

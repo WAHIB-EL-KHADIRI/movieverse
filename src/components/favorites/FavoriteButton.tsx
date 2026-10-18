@@ -1,4 +1,5 @@
 import { useFavorites } from '../../hooks/useFavorites';
+import { useI18n } from '../../i18n/useI18n';
 import type { MovieSummary } from '../../types/movie';
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 
 export function FavoriteButton({ movie, variant = 'icon' }: Props) {
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { t } = useI18n();
   const active = isFavorite(movie.id);
   const heart = (
     <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" className="fav__heart">
@@ -31,7 +33,7 @@ export function FavoriteButton({ movie, variant = 'icon' }: Props) {
         onClick={() => toggleFavorite(movie)}
       >
         {heart}
-        {active ? 'Remove from Favorites' : 'Add to Favorites'}
+        {active ? t('fav.remove') : t('fav.add')}
       </button>
     );
   }
@@ -41,7 +43,7 @@ export function FavoriteButton({ movie, variant = 'icon' }: Props) {
       type="button"
       className={`fav ${active ? 'fav--active' : ''}`}
       aria-pressed={active}
-      aria-label={active ? `Remove ${movie.title} from favorites` : `Add ${movie.title} to favorites`}
+      aria-label={active ? t('card.removeFav', { title: movie.title }) : t('fav.addNamed', { title: movie.title })}
       onClick={() => toggleFavorite(movie)}
     >
       {heart}

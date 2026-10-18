@@ -15,6 +15,7 @@ A fast, accessible movie-discovery app built with **React 19 + Vite + TypeScript
 
 ## Features
 
+- **Three languages: English, Français, العربية** – instant switcher in the header. Arabic flips the whole layout to right-to-left (`<html dir="rtl">`, logical CSS properties), and the chosen language is also sent to TMDB (`language=`), so titles, overviews and genres come back translated. The choice is remembered, defaults to the browser language, and every dictionary is checked by a test (same keys, no empty strings, same placeholders).
 - **Cinematic UI** – auto-rotating hero spotlight (top 5 trending; pauses on hover/focus, never rotates for reduced-motion users), colour-coded rating rings, staggered card entrance, hover overview on cards, ambient glow background.
 - **Trending** – weekly trending movies with a hero banner, poster cards (poster, title, rating, release date), skeleton loading, error and empty states, and "Load more" pagination that stops at the last page.
 - **Search** – by title, with a 400 ms debounce, no request for blank input, cancellation of outdated requests (`AbortController`) *and* discarding of late responses, so stale results can never replace newer ones.
@@ -92,6 +93,7 @@ src/
     favorites/    FavoritesProvider (context + localStorage), FavoriteButton
     feedback/     ErrorState, EmptyState, skeletons
   pages/          TrendingPage, MovieDetailsPage, FavoritesPage, NotFoundPage
+  i18n/           translations (en/fr/ar), LanguageProvider, useI18n
   hooks/          useDebounce, useMovieList, useMovieDetails, useFavorites
   services/       tmdb.ts – the only module that talks to the API
   types/          movie.ts – normalised domain types

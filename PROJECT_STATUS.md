@@ -1,6 +1,6 @@
 # PROJECT_STATUS
 
-Verified on Node 22 / npm 10. Last full run: `typecheck` (0 errors), `lint` (0 errors), `vitest` (9 files, 146 tests, all passed), `vite build` (success).
+Verified on Node 22 / npm 10. Last full run: `typecheck` (0 errors), `lint` (0 errors), `vitest` (9 files, 163 tests, all passed), `vite build` (success).
 
 **Important limit of verification:** no real TMDB key was available, so nothing was exercised against the live TMDB API. All API behaviour is verified against an MSW mock whose shapes follow the TMDB docs. Status values below say so explicitly.
 
@@ -38,6 +38,7 @@ Legend: PASS = verified by automated tests/commands listed; BLOCKED = needs some
 | Genre filter, trailer (click-to-load), cast, similar movies, `/` search shortcut (extras beyond the brief) | PASS (mocked API + live endpoints return 200) | `tmdb.test.ts`, `TrendingPage.test.tsx`, `MovieDetailsPage.test.tsx`, `components.test.tsx`; UI not visually checked by me |
 | Hero carousel, rating rings, card hover overview, entrance animation | PASS (logic tests: dots, auto-rotate, pause, reduced motion, ring a11y); visual quality NOT verified by me in a browser | `components.test.tsx` |
 | Command palette (Ctrl+K), Surprise me, favorites sort/filter/stats/export/import | PASS (mocked API; real `/discover` already verified 200) | `CommandPalette.test.tsx`, `FavoritesTools.test.tsx`, `favorites.test.ts`, `storage.test.ts`, `TrendingPage.test.tsx`; visual check not done by me |
+| English / French / Arabic UI with RTL layout and TMDB `language` param | PASS (mocked API): `i18n.test.tsx` (dictionary completeness, detection, switching, RTL attrs, translated errors/details/favorites/palette, language sent to TMDB). Translation QUALITY of fr/ar not reviewed by a native speaker; RTL visual layout NOT checked in a browser | `i18n.test.tsx` |
 | Dark mode | PASS (code) | Dark default + light toggle persisted in localStorage; toggle itself has no automated test |
 
 ## Acceptance checks
@@ -46,7 +47,7 @@ Legend: PASS = verified by automated tests/commands listed; BLOCKED = needs some
 |---|---|
 | `npm run typecheck` | 0 errors |
 | `npm run lint` | 0 errors, 0 warnings |
-| `npm test` | 146 / 146 passed |
+| `npm test` | 163 / 163 passed |
 | `npm run build` | success |
 | `npm audit` | 0 vulnerabilities |
 | Secrets in files to deliver | none; `.env` is git-ignored, `.env.example` has a placeholder |

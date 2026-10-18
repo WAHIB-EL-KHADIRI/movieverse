@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n';
 import { formatRating } from '../../utils/format';
 
 interface Props {
@@ -13,9 +14,10 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const ringColor = (v: number): string => (v >= 7 ? 'var(--good)' : v >= 5 ? 'var(--star)' : 'var(--bad)');
 
 export function Rating({ value, votes, variant = 'inline' }: Props) {
+  const { t } = useI18n();
   const text = formatRating(value, votes);
   const unrated = text === 'NR';
-  const label = unrated ? 'Not rated yet' : `Rated ${text} out of 10`;
+  const label = unrated ? t('rating.none') : t('rating.value', { v: text });
 
   if (variant === 'ring') {
     const progress = unrated ? 0 : Math.min(Math.max(value / 10, 0), 1);

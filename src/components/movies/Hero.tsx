@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useI18n } from '../../i18n/useI18n';
 import type { MovieSummary } from '../../types/movie';
 import { backdropUrl, getYear } from '../../utils/format';
 import { Rating } from './Rating';
@@ -11,6 +12,7 @@ const prefersReducedMotion = (): boolean =>
 
 /** Auto-rotating spotlight of the top trending movies. Pauses on hover/focus; never rotates for reduced-motion users. */
 export function Hero({ movies }: { movies: MovieSummary[] }) {
+  const { t } = useI18n();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const count = movies.length;
@@ -39,7 +41,7 @@ export function Hero({ movies }: { movies: MovieSummary[] }) {
         {bg && <img className="hero__bg" src={bg} alt="" loading="eager" decoding="async" />}
         <div className="hero__shade" />
         <div className="hero__content">
-          <p className="eyebrow">#{(index % count) + 1} trending this week</p>
+          <p className="eyebrow">{t('hero.eyebrow', { n: (index % count) + 1 })}</p>
           <h2 id="hero-title" className="hero__title">
             {movie.title}
           </h2>
@@ -49,18 +51,18 @@ export function Hero({ movies }: { movies: MovieSummary[] }) {
           </div>
           {movie.overview && <p className="hero__overview">{movie.overview}</p>}
           <Link to={`/movie/${movie.id}`} className="btn btn--primary">
-            View details
+            {t('hero.view')}
           </Link>
         </div>
       </div>
       {count > 1 && (
-        <div className="hero__dots" role="group" aria-label="Choose featured movie">
+        <div className="hero__dots" role="group" aria-label={t('hero.choose')}>
           {movies.map((m, i) => (
             <button
               key={m.id}
               type="button"
               className={`hero__dot ${i === index % count ? 'is-active' : ''}`}
-              aria-label={`Show ${m.title}`}
+              aria-label={t('hero.show', { title: m.title })}
               aria-current={i === index % count}
               onClick={() => setIndex(i)}
             />

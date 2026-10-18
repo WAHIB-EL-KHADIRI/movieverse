@@ -1167,3 +1167,51 @@ body::before {
 .palette__status:empty {
   display: none;
 }
+
+/* ---------- language switcher & right-to-left (Arabic) ---------- */
+.lang-select {
+  height: 40px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.lang-select:hover {
+  background: var(--bg-hover);
+}
+
+[dir='rtl'] .search__icon {
+  inset-inline-start: var(--space-4);
+}
+
+[dir='rtl'] .search__input {
+  padding: 0.85rem 2.8rem 0.85rem 3rem;
+}
+
+[dir='rtl'] .hero__shade {
+  background:
+    linear-gradient(270deg, rgb(11 11 18 / 0.92) 0%, rgb(11 11 18 / 0.45) 55%, transparent 100%),
+    linear-gradient(0deg, rgb(11 11 18 / 0.85) 0%, transparent 55%);
+}
+
+[dir='rtl'] .palette__item.is-active {
+  box-shadow: inset -3px 0 0 var(--accent);
+}
+
+[dir='rtl'] .section-title::before {
+  inset-inline-start: 0;
+}
+
+[dir='rtl'] .details__poster:hover {
+  transform: perspective(900px) rotateY(4deg) rotateX(2deg) scale(1.02);
+}
+
+/* Latin-script movie titles inside Arabic text keep their natural direction. */
+.movie-card__title,
+.hero__title,
+.details__title {
+  unicode-bidi: plaintext;
+}

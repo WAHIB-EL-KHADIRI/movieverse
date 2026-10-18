@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useI18n } from '../../i18n/useI18n';
 import type { FavoriteMovie } from '../../types/movie';
 import { formatReleaseDate } from '../../utils/format';
 import { FavoriteButton } from '../favorites/FavoriteButton';
@@ -16,9 +17,10 @@ interface Props {
 }
 
 export function MovieCard({ movie, onRemove, priority }: Props) {
+  const { t, locale } = useI18n();
   return (
     <article className="movie-card">
-      <Link to={`/movie/${movie.id}`} className="movie-card__link" aria-label={`${movie.title} — view details`}>
+      <Link to={`/movie/${movie.id}`} className="movie-card__link" aria-label={t('card.view', { title: movie.title })}>
         <div className="movie-card__poster">
           <Poster path={movie.posterPath} title={movie.title} priority={priority} />
           {movie.overview && (
@@ -33,7 +35,7 @@ export function MovieCard({ movie, onRemove, priority }: Props) {
         <div className="movie-card__info">
           <h3 className="movie-card__title">{movie.title}</h3>
           <div className="movie-card__meta">
-            <time dateTime={movie.releaseDate || undefined}>{formatReleaseDate(movie.releaseDate)}</time>
+            <time dateTime={movie.releaseDate || undefined}>{formatReleaseDate(movie.releaseDate, locale, t('format.dateUnknown'))}</time>
           </div>
         </div>
       </Link>
@@ -41,7 +43,7 @@ export function MovieCard({ movie, onRemove, priority }: Props) {
         <button
           type="button"
           className="fav fav--remove"
-          aria-label={`Remove ${movie.title} from favorites`}
+          aria-label={t('card.removeFav', { title: movie.title })}
           onClick={() => onRemove(movie.id)}
         >
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">

@@ -9,8 +9,9 @@ import { MovieGrid } from '../components/movies/MovieGrid';
 import { SearchBar } from '../components/search/SearchBar';
 import { useDebounce } from '../hooks/useDebounce';
 import { useGenres } from '../hooks/useGenres';
+import { useI18n } from '../i18n/useI18n';
 import { useMovieList } from '../hooks/useMovieList';
-import { errorMessage, fetchRandomMovie } from '../services/tmdb';
+import { fetchRandomMovie } from '../services/tmdb';
 import type { SortOption } from '../types/movie';
 
 export const SEARCH_DEBOUNCE_MS = 400;
@@ -27,6 +28,7 @@ const parseGenre = (v: string | null): string => (v && /^\d{1,6}$/.test(v) ? v :
 export function TrendingPage() {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t, errorText, tmdbLanguage } = useI18n();
   const [surprise, setSurprise] = useState<{ busy: boolean; error: string | null }>({ busy: false, error: null });
   const urlQuery = params.get('q') ?? '';
   const year = parseYear(params.get('year'));
@@ -75,10 +77,10 @@ export function TrendingPage() {
   const surpriseMe = async () => {
     setSurprise({ busy: true, error: null });
     try {
-      const movie = await fetchRandomMovie();
+      const movie = await fetchRandomMovie(undefined, tmdbLanguage);
       navigate(`/movie/${movie.id}`);
     } catch (e) {
-      setSurprise({ busy: false, error: errorMessage(e) });
+      setSurprise({ busy: false, error: errorText(e) });
     }
   };
 
@@ -88,13 +90,17 @@ export function TrendingPage() {
     setParams({}, { replace: true });
   };
 
-  const heading = searching ? `Results for “${urlQuery.trim()}”` : isDefaultView ? 'Trending this week' : 'Browse movies';
+  const heading = searching
+    ? t('trending.results', { q: urlQuery.trim() })
+    : isDefaultView
+      ? t('trending.title')
+      : t('trending.browse');
 
   return (
     <>
       {heroMovies.length > 0 && <Hero movies={heroMovies} />}
 
-      <section className="toolbar" aria-label="Search and filters">
+      <section className="toolbar" aria-label={t('trending.toolbar')}>
         <SearchBar value={text} onChange={setText} busy={pendingSearch || (searching && status === 'loading')} />
         <FilterBar
           year={year}
@@ -114,10 +120,10 @@ export function TrendingPage() {
           <h1 id="list-title" className="section-title">
             {heading}
           </h1>
-          {year && <span className="chip">Year: {year}</span>}
-          {genreName && <span className="chip">Genre: {genreName}</span>}
+          {year && <span className="chip">{t('chip.year', { y: year })}</span>}
+          {genreName && <span className="chip">{t('chip.genre', { g: genreName })}</span>}
           <button type="button" className="btn btn--ghost surprise" onClick={surpriseMe} disabled={surprise.busy}>
-            {surprise.busy ? 'Picking…' : '🎲 Surprise me'}
+            {surprise.busy ? t('surprise.busy') : t('surprise.button')}
           </button>
         </div>
         {surprise.error && (
@@ -126,29 +132,29 @@ export function TrendingPage() {
           </p>
         )}
         {searching && sort !== 'default' && (
-          <p className="hint">Search results are sorted among the movies loaded so far. Load more to extend the ordering.</p>
+          <p className="hint">{t('trending.sortHint')}</p>
         )}
 
         {status === 'loading' && <MovieGridSkeleton />}
 
-        {status === 'error' && <ErrorState message={errorMessage(error)} onRetry={retry} />}
+        {status === 'error' && <ErrorState message={errorText(error)} onRetry={retry} />}
 
         {status === 'empty' && (
           <EmptyState
-            title="No movies found"
+            title={t('empty.title')}
             message={
               searching
-                ? `Nothing matches “${urlQuery.trim()}”${year ? ` in ${year}` : ''}. Try a different title or remove the year filter.`
-                : 'No movies match these filters.'
+                ? t(year ? 'empty.searchYear' : 'empty.searchNoYear', { q: urlQuery.trim(), y: year })
+                : t('empty.filters')
             }
           >
             {hasMore && (
               <button type="button" className="btn btn--ghost" onClick={loadMore}>
-                Load more results
+                {t('list.loadMoreResults')}
               </button>
             )}
             <button type="button" className="btn btn--ghost" onClick={clearAll}>
-              Clear search &amp; filters
+              {t('list.clearAll')}
             </button>
           </EmptyState>
         )}
@@ -157,19 +163,19 @@ export function TrendingPage() {
           <>
             <MovieGrid movies={movies} label={heading} />
             <div className="load-more">
-              {status === 'error-more' && <ErrorState title="Couldn’t load more" message={errorMessage(error)} onRetry={retry} />}
+              {status === 'error-more' && <ErrorState title={t('list.moreFailed')} message={errorText(error)} onRetry={retry} />}
               {status === 'loading-more' && (
                 <button type="button" className="btn btn--ghost" disabled>
-                  Loading…
+                  {t('list.loading')}
                 </button>
               )}
               {(status === 'success') &&
                 (hasMore ? (
                   <button type="button" className="btn btn--ghost" onClick={loadMore}>
-                    Load more
+                    {t('list.loadMore')}
                   </button>
                 ) : (
-                  <p className="hint">You’ve reached the end of the results.</p>
+                  <p className="hint">{t('list.end')}</p>
                 ))}
             </div>
           </>

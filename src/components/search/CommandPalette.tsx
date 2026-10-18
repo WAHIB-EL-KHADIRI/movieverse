@@ -1,8 +1,9 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useI18n } from '../../i18n/useI18n';
 import { useDebounce } from '../../hooks/useDebounce';
-import { errorMessage, fetchMovies, isAbortError } from '../../services/tmdb';
+import { fetchMovies, isAbortError } from '../../services/tmdb';
 import type { MovieSummary } from '../../types/movie';
 import { formatRating, getYear } from '../../utils/format';
 import { Poster } from '../movies/Poster';
@@ -13,11 +14,12 @@ const DEBOUNCE_MS = 250;
 interface Outcome {
   query: string;
   movies: MovieSummary[];
-  error: string | null;
+  error: unknown;
 }
 
 function Palette({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
+  const { t, errorText, tmdbLanguage } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
   const listId = useId();
   const [text, setText] = useState('');
@@ -31,18 +33,18 @@ function Palette({ onClose }: { onClose: () => void }) {
     if (!query) return;
     let cancelled = false;
     const controller = new AbortController();
-    fetchMovies({ query, year: '', sort: 'default', page: 1 }, controller.signal)
+    fetchMovies({ query, year: '', sort: 'default', page: 1, language: tmdbLanguage }, controller.signal)
       .then((page) => {
         if (!cancelled) setOutcome({ query, movies: page.results.slice(0, MAX_RESULTS), error: null });
       })
       .catch((error: unknown) => {
-        if (!cancelled && !isAbortError(error)) setOutcome({ query, movies: [], error: errorMessage(error) });
+        if (!cancelled && !isAbortError(error)) setOutcome({ query, movies: [], error });
       });
     return () => {
       cancelled = true;
       controller.abort();
     };
-  }, [query]);
+  }, [query, tmdbLanguage]);
 
   // Results belong to the query that produced them; anything else is stale and hidden.
   const current = query && outcome?.query === query ? outcome : null;
@@ -73,7 +75,7 @@ function Palette({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="palette-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="palette" role="dialog" aria-modal="true" aria-label="Quick search" onKeyDown={onKeyDown}>
+      <div className="palette" role="dialog" aria-modal="true" aria-label={t('palette.dialog')} onKeyDown={onKeyDown}>
         <input
           ref={inputRef}
           className="palette__input"
@@ -82,16 +84,16 @@ function Palette({ onClose }: { onClose: () => void }) {
           aria-expanded={movies.length > 0}
           aria-controls={listId}
           aria-activedescendant={movies.length ? `${listId}-${activeIndex}` : undefined}
-          aria-label="Search movies"
+          aria-label={t('palette.input')}
           autoComplete="off"
-          placeholder="Jump to a movie…"
+          placeholder={t('palette.placeholder')}
           value={text}
           onChange={(e) => {
             setText(e.target.value);
             setActive(0);
           }}
         />
-        <ul id={listId} className="palette__list" role="listbox" aria-label="Results">
+        <ul id={listId} className="palette__list" role="listbox" aria-label={t('palette.results')}>
           {movies.map((m, i) => (
             <li
               key={m.id}
@@ -108,17 +110,17 @@ function Palette({ onClose }: { onClose: () => void }) {
               <span className="palette__text">
                 <strong>{m.title}</strong>
                 <span>
-                  {getYear(m.releaseDate) || 'Year unknown'} · ★ {formatRating(m.voteAverage, m.voteCount)}
+                  {getYear(m.releaseDate) || t('palette.yearUnknown')} · ★ {formatRating(m.voteAverage, m.voteCount)}
                 </span>
               </span>
             </li>
           ))}
         </ul>
         <p className="palette__status" role="status">
-          {!query && 'Type to search · ↑↓ to move · Enter to open · Esc to close'}
-          {loading && 'Searching…'}
-          {current?.error}
-          {current && !current.error && movies.length === 0 && `No movies found for “${query}”.`}
+          {!query && t('palette.hint')}
+          {loading && t('palette.searching')}
+          {current?.error != null && errorText(current.error)}
+          {current && current.error == null && movies.length === 0 && t('palette.none', { q: query })}
         </p>
       </div>
     </div>
@@ -127,6 +129,7 @@ function Palette({ onClose }: { onClose: () => void }) {
 
 /** Ctrl/⌘+K quick-search overlay available on every page. */
 export function CommandPalette() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const opener = useRef<HTMLElement | null>(null);
 
@@ -156,7 +159,7 @@ export function CommandPalette() {
           opener.current = e.currentTarget;
           setOpen(true);
         }}
-        aria-label="Open quick search (Ctrl+K)"
+        aria-label={t('palette.open')}
       >
         <span aria-hidden="true">⌕</span>
         <kbd aria-hidden="true">Ctrl K</kbd>

@@ -221,6 +221,8 @@ export interface ListQuery {
   page: number;
   /** TMDB genre id as a string, or empty/undefined for any. Browse mode only (see hook for search). */
   genre?: string;
+  /** TMDB `language` parameter (e.g. "fr-FR"); omitted → TMDB default (en-US). */
+  language?: string;
 }
 
 const DISCOVER_SORT: Record<Exclude<SortOption, 'default'>, string> = {
@@ -243,12 +245,16 @@ export async function fetchMovies(q: ListQuery, signal?: AbortSignal): Promise<M
 
   if (query) {
     return parsePage(
-      await request('/search/movie', { query, page: q.page, primary_release_year: year, include_adult: 'false' }, signal),
+      await request(
+        '/search/movie',
+        { query, page: q.page, primary_release_year: year, include_adult: 'false', language: q.language },
+        signal,
+      ),
     );
   }
   const genre = /^\d{1,6}$/.test(q.genre ?? '') ? (q.genre as string) : '';
   if (!year && !genre && q.sort === 'default') {
-    return parsePage(await request('/trending/movie/week', { page: q.page }, signal));
+    return parsePage(await request('/trending/movie/week', { page: q.page, language: q.language }, signal));
   }
   const sort = q.sort === 'default' ? 'popularity' : q.sort;
   const today = new Date().toISOString().slice(0, 10);
@@ -260,6 +266,7 @@ export async function fetchMovies(q: ListQuery, signal?: AbortSignal): Promise<M
         sort_by: DISCOVER_SORT[sort],
         primary_release_year: year,
         with_genres: genre,
+        language: q.language,
         include_adult: 'false',
         'vote_count.gte': sort === 'rating' ? MIN_VOTES_FOR_RATING_SORT : undefined,
         // Don't surface unreleased titles when ordering by release date.
@@ -275,10 +282,19 @@ export function isValidMovieId(id: string | undefined): id is string {
   return !!id && /^[1-9]\d{0,9}$/.test(id);
 }
 
-export async function fetchMovieDetails(id: string, signal?: AbortSignal): Promise<MovieDetails> {
+export async function fetchMovieDetails(id: string, signal?: AbortSignal, language?: string): Promise<MovieDetails> {
   if (!isValidMovieId(id)) throw new TmdbError('not-found');
   // One request returns details + trailer + cast + similar titles (no N+1 calls).
-  const data = await request(`/movie/${id}`, { append_to_response: 'videos,credits,similar' }, signal);
+  // `include_video_language` keeps trailers in the UI language *and* English (TMDB filters videos by language otherwise).
+  const data = await request(
+    `/movie/${id}`,
+    {
+      append_to_response: 'videos,credits,similar',
+      language,
+      include_video_language: language ? `${language.slice(0, 2)},en,null` : undefined,
+    },
+    signal,
+  );
   const base = parseMovie(data);
   if (!base) throw new TmdbError('invalid-response');
   const r = data as RawMovie;
@@ -298,7 +314,11 @@ export async function fetchMovieDetails(id: string, signal?: AbortSignal): Promi
  * "Surprise me": a random well-rated, well-known movie. Picks a random page of
  * /discover (popular, decent score, enough votes) and then a random result.
  */
-export async function fetchRandomMovie(signal?: AbortSignal, random: () => number = Math.random): Promise<MovieSummary> {
+export async function fetchRandomMovie(
+  signal?: AbortSignal,
+  language?: string,
+  random: () => number = Math.random,
+): Promise<MovieSummary> {
   const page = 1 + Math.floor(random() * 20);
   const data = await request(
     '/discover/movie',
@@ -308,6 +328,7 @@ export async function fetchRandomMovie(signal?: AbortSignal, random: () => numbe
       'vote_count.gte': 1000,
       'vote_average.gte': 6.5,
       include_adult: 'false',
+      language,
     },
     signal,
   );
@@ -317,7 +338,7 @@ export async function fetchRandomMovie(signal?: AbortSignal, random: () => numbe
   return movie;
 }
 
-export async function fetchGenres(signal?: AbortSignal): Promise<Genre[]> {
-  const data = await request('/genre/movie/list', {}, signal);
+export async function fetchGenres(signal?: AbortSignal, language?: string): Promise<Genre[]> {
+  const data = await request('/genre/movie/list', { language }, signal);
   return parseGenres(asRecord(data).genres);
 }

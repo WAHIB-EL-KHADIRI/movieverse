@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
+import { useI18n } from '../i18n/useI18n';
 import { ErrorState } from '../components/feedback/ErrorState';
 
 export function NotFoundPage() {
+  const { t } = useI18n();
   return (
-    <ErrorState title="Page not found" message="The page you’re looking for doesn’t exist.">
+    <ErrorState title={t('notfound.title')} message={t('notfound.msg')}>
       <Link to="/" className="btn btn--primary">
-        Back to trending
+        {t('notfound.back')}
       </Link>
     </ErrorState>
   );

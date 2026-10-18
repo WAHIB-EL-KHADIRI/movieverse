@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 
 interface Props {
   videoKey: string;
@@ -10,6 +11,7 @@ interface Props {
  * (better performance and privacy), and the privacy-enhanced youtube-nocookie domain is used.
  */
 export function TrailerPlayer({ videoKey, title }: Props) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   if (!open) {
@@ -18,7 +20,7 @@ export function TrailerPlayer({ videoKey, title }: Props) {
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
           <path d="M8 5v14l11-7z" fill="currentColor" />
         </svg>
-        Watch trailer
+        {t('trailer.watch')}
       </button>
     );
   }
@@ -27,14 +29,14 @@ export function TrailerPlayer({ videoKey, title }: Props) {
     <div className="trailer">
       <iframe
         src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoKey)}?autoplay=1&rel=0`}
-        title={`${title} — trailer`}
+        title={t('trailer.title', { title })}
         allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
         allowFullScreen
         referrerPolicy="strict-origin-when-cross-origin"
       />
       <div className="actions">
         <button type="button" className="btn btn--ghost" onClick={() => setOpen(false)}>
-          Close trailer
+          {t('trailer.close')}
         </button>
         {/* Some uploaders disable embedding or block regions; the watch page still works. */}
         <a
@@ -43,7 +45,7 @@ export function TrailerPlayer({ videoKey, title }: Props) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Not playing? Watch on YouTube
+          {t('trailer.youtube')}
         </a>
       </div>
     </div>

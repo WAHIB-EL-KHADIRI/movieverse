@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { posterUrl } from '../../utils/format';
 import type { PosterSize } from '../../utils/format';
 
@@ -11,12 +12,13 @@ interface Props {
 
 /** Poster with a graceful fallback for missing or broken images. */
 export function Poster({ path, title, size = 'w342', priority = false }: Props) {
+  const { t } = useI18n();
   const [failedPath, setFailedPath] = useState<string | null>(null);
   const src = posterUrl(path, size);
 
   if (!src || failedPath === path) {
     return (
-      <div className="poster poster--fallback" role="img" aria-label={`No poster available for ${title}`}>
+      <div className="poster poster--fallback" role="img" aria-label={t('poster.none', { title })}>
         <span aria-hidden="true">🎬</span>
         <span className="poster__fallback-title" aria-hidden="true">
           {title}
@@ -29,7 +31,7 @@ export function Poster({ path, title, size = 'w342', priority = false }: Props) 
     <img
       className="poster"
       src={src}
-      alt={`Poster of ${title}`}
+      alt={t('poster.alt', { title })}
       width={342}
       height={513}
       loading={priority ? 'eager' : 'lazy'}

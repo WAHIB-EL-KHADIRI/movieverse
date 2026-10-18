@@ -1,19 +1,27 @@
-export function formatRuntime(minutes: number | null): string {
-  if (!minutes || minutes <= 0) return 'Runtime unknown';
+export interface RuntimeLabels {
+  h: string;
+  m: string;
+  unknown: string;
+}
+
+const EN_RUNTIME: RuntimeLabels = { h: 'h', m: 'm', unknown: 'Runtime unknown' };
+
+export function formatRuntime(minutes: number | null, labels: RuntimeLabels = EN_RUNTIME): string {
+  if (!minutes || minutes <= 0) return labels.unknown;
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  if (h === 0) return `${m}m`;
-  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+  if (h === 0) return `${m}${labels.m}`;
+  return m === 0 ? `${h}${labels.h}` : `${h}${labels.h} ${m}${labels.m}`;
 }
 
 export function getYear(date: string): string {
   return /^\d{4}/.test(date) ? date.slice(0, 4) : '';
 }
 
-export function formatReleaseDate(date: string): string {
+export function formatReleaseDate(date: string, locale = 'en-US', unknown = 'Release date unknown'): string {
   const t = Date.parse(date);
-  if (Number.isNaN(t)) return 'Release date unknown';
-  return new Date(t).toLocaleDateString('en-US', {
+  if (Number.isNaN(t)) return unknown;
+  return new Date(t).toLocaleDateString(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useI18n } from '../i18n/useI18n';
 import { fetchMovies, isAbortError } from '../services/tmdb';
 import type { ListQuery } from '../services/tmdb';
 import type { MovieSummary, SortOption } from '../types/movie';
@@ -43,12 +44,13 @@ interface Options {
  * State is keyed by the filter, so results of one query can never be shown for another.
  */
 export function useMovieList({ query, year, sort, genre = '' }: Options): MovieListState {
+  const { tmdbLanguage: language } = useI18n();
   const trimmed = query.trim();
   const searching = trimmed.length > 0;
   // In search mode TMDB can neither sort nor filter by genre, so both happen client-side and must not refetch.
   const fetchSort: SortOption = searching ? 'default' : sort;
   const fetchGenre = searching ? '' : genre;
-  const filterKey = JSON.stringify([trimmed, year, fetchSort, fetchGenre]);
+  const filterKey = JSON.stringify([trimmed, year, fetchSort, fetchGenre, language]);
 
   const [requested, setRequested] = useState({ filterKey, page: 1 });
   const [loaded, setLoaded] = useState<Loaded | null>(null);
@@ -62,7 +64,7 @@ export function useMovieList({ query, year, sort, genre = '' }: Options): MovieL
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
-    const request: ListQuery = { query: trimmed, year, sort: fetchSort, page, genre: fetchGenre };
+    const request: ListQuery = { query: trimmed, year, sort: fetchSort, page, genre: fetchGenre, language };
 
     fetchMovies(request, controller.signal)
       .then((result) => {
@@ -83,7 +85,7 @@ export function useMovieList({ query, year, sort, genre = '' }: Options): MovieL
       cancelled = true;
       controller.abort();
     };
-  }, [trimmed, year, fetchSort, fetchGenre, page, filterKey, attemptId]);
+  }, [trimmed, year, fetchSort, fetchGenre, language, page, filterKey, attemptId]);
 
   const current = loaded?.filterKey === filterKey ? loaded : null;
   const failure = failed?.attemptId === attemptId ? failed : null;

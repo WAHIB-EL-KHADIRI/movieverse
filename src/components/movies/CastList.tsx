@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import type { CastMember } from '../../types/movie';
 import { profileUrl } from '../../utils/format';
 
@@ -22,11 +23,12 @@ function Avatar({ member }: { member: CastMember }) {
 }
 
 export function CastList({ cast }: { cast: CastMember[] }) {
+  const { t } = useI18n();
   if (cast.length === 0) return null;
   return (
     <section aria-labelledby="cast-title" className="extra">
       <h2 id="cast-title" className="details__subtitle">
-        Top cast
+        {t('details.cast')}
       </h2>
       <ul className="cast">
         {cast.map((m) => (

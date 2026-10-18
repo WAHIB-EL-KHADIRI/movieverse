@@ -9,12 +9,14 @@ import { Poster } from '../components/movies/Poster';
 import { TrailerPlayer } from '../components/movies/TrailerPlayer';
 import { Rating } from '../components/movies/Rating';
 import { useMovieDetails } from '../hooks/useMovieDetails';
-import { TmdbError, errorMessage, isValidMovieId } from '../services/tmdb';
+import { useI18n } from '../i18n/useI18n';
+import { TmdbError, isValidMovieId } from '../services/tmdb';
 import { backdropUrl, formatReleaseDate, formatRuntime } from '../utils/format';
 
 export function MovieDetailsPage() {
   const { movieId = '' } = useParams();
   const navigate = useNavigate();
+  const { t, locale, errorText } = useI18n();
   const location = useLocation();
   const { movie, loading, error, retry } = useMovieDetails(movieId);
 
@@ -33,15 +35,15 @@ export function MovieDetailsPage() {
   const canGoBack = location.key !== 'default';
   const back = (
     <button type="button" className="btn btn--ghost" onClick={() => (canGoBack ? navigate(-1) : navigate('/'))}>
-      ← Back
+      {t('details.back')}
     </button>
   );
 
   if (!isValidMovieId(movieId)) {
     return (
-      <ErrorState title="Invalid movie ID" message={`“${movieId}” is not a valid movie ID.`}>
+      <ErrorState title={t('details.invalidTitle')} message={t('details.invalidMsg', { id: movieId })}>
         <Link to="/" className="btn btn--primary">
-          Browse trending movies
+          {t('details.browse')}
         </Link>
       </ErrorState>
     );
@@ -53,8 +55,8 @@ export function MovieDetailsPage() {
     const notFound = error instanceof TmdbError && error.kind === 'not-found';
     return (
       <ErrorState
-        title={notFound ? 'Movie not found' : 'Couldn’t load this movie'}
-        message={notFound ? 'This movie does not exist or was removed from TMDB.' : errorMessage(error)}
+        title={notFound ? t('details.notFoundTitle') : t('details.loadFailed')}
+        message={notFound ? t('details.notFoundMsg') : errorText(error)}
         onRetry={notFound ? undefined : retry}
       >
         {back}
@@ -82,13 +84,13 @@ export function MovieDetailsPage() {
           <ul className="facts">
             <li>
               <Rating value={movie.voteAverage} votes={movie.voteCount} />
-              {movie.voteCount > 0 && <span className="muted"> ({movie.voteCount.toLocaleString('en-US')} votes)</span>}
+              {movie.voteCount > 0 && <span className="muted"> {t('details.votes', { n: movie.voteCount.toLocaleString(locale) })}</span>}
             </li>
-            <li>{formatRuntime(movie.runtime)}</li>
-            <li>{formatReleaseDate(movie.releaseDate)}</li>
+            <li>{formatRuntime(movie.runtime, { h: t('unit.h'), m: t('unit.m'), unknown: t('format.runtimeUnknown') })}</li>
+            <li>{formatReleaseDate(movie.releaseDate, locale, t('format.dateUnknown'))}</li>
           </ul>
           {movie.genres.length > 0 && (
-            <ul className="genres" aria-label="Genres">
+            <ul className="genres" aria-label={t('details.genres')}>
               {movie.genres.map((g) => (
                 <li key={g.id} className="chip">
                   {g.name}
@@ -96,8 +98,8 @@ export function MovieDetailsPage() {
               ))}
             </ul>
           )}
-          <h2 className="details__subtitle">Overview</h2>
-          <p className="details__overview">{movie.overview || 'No overview available for this movie.'}</p>
+          <h2 className="details__subtitle">{t('details.overview')}</h2>
+          <p className="details__overview">{movie.overview || t('details.noOverview')}</p>
           <div className="actions">
             <FavoriteButton movie={movie} variant="full" />
             {movie.trailerKey && <TrailerPlayer videoKey={movie.trailerKey} title={movie.title} />}
@@ -111,9 +113,9 @@ export function MovieDetailsPage() {
     {movie.similar.length > 0 && (
       <section aria-labelledby="similar-title" className="extra">
         <h2 id="similar-title" className="details__subtitle">
-          More like this
+          {t('details.similar')}
         </h2>
-        <MovieGrid movies={movie.similar} label="Similar movies" />
+        <MovieGrid movies={movie.similar} label={t('details.similarLabel')} />
       </section>
     )}
     </>

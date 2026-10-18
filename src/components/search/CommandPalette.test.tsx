@@ -41,17 +41,17 @@ describe('Command palette', () => {
     expect(within(palette()).getByRole('status')).toHaveTextContent(/type to search/i);
 
     await user.type(input(), 'a'); // matches all three fixtures
-    const options = await screen.findAllByRole('option');
+    const options = await within(palette()).findAllByRole('option');
     expect(options.map((o) => o.querySelector('strong')?.textContent)).toEqual(['Alpha Rising', 'Beta Protocol', 'Gamma Ray']);
     expect(options[0]).toHaveAttribute('aria-selected', 'true');
     expect(input()).toHaveAttribute('aria-activedescendant', options[0]!.id);
 
     await user.keyboard('{ArrowDown}{ArrowDown}');
-    expect(screen.getAllByRole('option')[2]).toHaveAttribute('aria-selected', 'true');
+    expect(within(palette()).getAllByRole('option')[2]).toHaveAttribute('aria-selected', 'true');
     await user.keyboard('{ArrowDown}'); // wraps
-    expect(screen.getAllByRole('option')[0]).toHaveAttribute('aria-selected', 'true');
+    expect(within(palette()).getAllByRole('option')[0]).toHaveAttribute('aria-selected', 'true');
     await user.keyboard('{ArrowUp}'); // wraps back
-    expect(screen.getAllByRole('option')[2]).toHaveAttribute('aria-selected', 'true');
+    expect(within(palette()).getAllByRole('option')[2]).toHaveAttribute('aria-selected', 'true');
 
     await user.keyboard('{Enter}');
     expect(router.state.location.pathname).toBe('/movie/3');

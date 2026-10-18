@@ -4,12 +4,19 @@ import { Link } from 'react-router-dom';
 import { EmptyState } from '../components/feedback/EmptyState';
 import { MovieGrid } from '../components/movies/MovieGrid';
 import { useFavorites } from '../hooks/useFavorites';
+import { useI18n } from '../i18n/useI18n';
 import { FAVORITE_SORT_LABELS, favoriteStats, filterAndSortFavorites } from '../utils/favorites';
 import type { FavoriteSort } from '../utils/favorites';
 import { parseFavorites, serializeFavorites } from '../utils/storage';
 
 const SORTS = Object.keys(FAVORITE_SORT_LABELS) as FavoriteSort[];
 const MAX_IMPORT_BYTES = 1_000_000;
+const SORT_KEYS = {
+  recent: 'favsort.recent',
+  title: 'favsort.title',
+  rating: 'favsort.rating',
+  release: 'favsort.release',
+} as const;
 
 function downloadJson(text: string): void {
   const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
@@ -22,6 +29,7 @@ function downloadJson(text: string): void {
 
 export function FavoritesPage() {
   const { favorites, removeFavorite, importFavorites, persistent } = useFavorites();
+  const { t } = useI18n();
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<FavoriteSort>('recent');
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
@@ -37,18 +45,18 @@ export function FavoritesPage() {
     e.target.value = ''; // allow picking the same file again
     if (!file) return;
     if (file.size > MAX_IMPORT_BYTES) {
-      setMessage({ ok: false, text: 'That file is too large to be a MovieVerse export.' });
+      setMessage({ ok: false, text: t('favs.tooLarge') });
       return;
     }
     const items = parseFavorites(await file.text());
     if (items.length === 0) {
-      setMessage({ ok: false, text: 'No valid favorites found in that file.' });
+      setMessage({ ok: false, text: t('favs.noValid') });
       return;
     }
     const added = importFavorites(items);
     setMessage({
       ok: true,
-      text: added > 0 ? `Imported ${added} new favorite${added === 1 ? '' : 's'}.` : 'Nothing new: all of those are already in your favorites.',
+      text: added === 0 ? t('favs.nothingNew') : added === 1 ? t('favs.imported1') : t('favs.importedN', { n: added }),
     });
   };
 
@@ -56,61 +64,61 @@ export function FavoritesPage() {
     <section aria-labelledby="fav-title">
       <div className="section-head">
         <h1 id="fav-title" className="section-title">
-          Your favorites
+          {t('favs.title')}
         </h1>
-        {favorites.length > 0 && <span className="chip">{favorites.length} saved</span>}
+        {favorites.length > 0 && <span className="chip">{t('favs.count', { n: favorites.length })}</span>}
       </div>
 
       {!persistent && (
         <p className="notice" role="alert">
-          Your browser blocked saving to local storage, so favorites will be lost when you close this tab.
+          {t('favs.blocked')}
         </p>
       )}
 
       {favorites.length > 0 && (
         <>
-          <dl className="stats" aria-label="Favorites statistics">
+          <dl className="stats" aria-label={t('favs.stats')}>
             <div className="stat">
-              <dt>Movies</dt>
+              <dt>{t('favs.statMovies')}</dt>
               <dd>{stats.count}</dd>
             </div>
             <div className="stat">
-              <dt>Average rating</dt>
+              <dt>{t('favs.statAvg')}</dt>
               <dd>{stats.averageRating === null ? '—' : stats.averageRating.toFixed(1)}</dd>
             </div>
             <div className="stat">
-              <dt>Years covered</dt>
+              <dt>{t('favs.statYears')}</dt>
               <dd>{stats.yearRange ? (stats.yearRange[0] === stats.yearRange[1] ? stats.yearRange[0] : `${stats.yearRange[0]}–${stats.yearRange[1]}`) : '—'}</dd>
             </div>
           </dl>
 
           <div className="filters fav-tools">
             <div className="field field--grow">
-              <label htmlFor={searchId}>Find in favorites</label>
-              <input id={searchId} type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Title…" />
+              <label htmlFor={searchId}>{t('favs.find')}</label>
+              <input id={searchId} type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('favs.findPlaceholder')} />
             </div>
             <div className="field">
-              <label htmlFor={sortId}>Sort by</label>
+              <label htmlFor={sortId}>{t('filters.sortBy')}</label>
               <select id={sortId} value={sort} onChange={(e) => setSort(e.target.value as FavoriteSort)}>
                 {SORTS.map((s) => (
                   <option key={s} value={s}>
-                    {FAVORITE_SORT_LABELS[s]}
+                    {t(SORT_KEYS[s])}
                   </option>
                 ))}
               </select>
             </div>
             <button type="button" className="btn btn--ghost" onClick={() => downloadJson(serializeFavorites(favorites))}>
-              Export
+              {t('favs.export')}
             </button>
             <button type="button" className="btn btn--ghost" onClick={() => fileRef.current?.click()}>
-              Import
+              {t('favs.import')}
             </button>
           </div>
         </>
       )}
 
       {/* Import also works from the empty state, so the file input lives outside the list. */}
-      <input ref={fileRef} type="file" accept="application/json,.json" className="sr-only" tabIndex={-1} aria-label="Import favorites file" onChange={onImport} />
+      <input ref={fileRef} type="file" accept="application/json,.json" className="sr-only" tabIndex={-1} aria-label={t('favs.importAria')} onChange={onImport} />
 
       {message && (
         <p className={message.ok ? 'hint' : 'notice'} role={message.ok ? 'status' : 'alert'}>
@@ -119,22 +127,22 @@ export function FavoritesPage() {
       )}
 
       {favorites.length === 0 ? (
-        <EmptyState title="No favorites yet" message="Tap the heart on any movie to save it here, or import a previous export.">
+        <EmptyState title={t('favs.emptyTitle')} message={t('favs.emptyMsg')}>
           <Link to="/" className="btn btn--primary">
-            Discover movies
+            {t('favs.discover')}
           </Link>
           <button type="button" className="btn btn--ghost" onClick={() => fileRef.current?.click()}>
-            Import favorites
+            {t('favs.importEmpty')}
           </button>
         </EmptyState>
       ) : visible.length === 0 ? (
-        <EmptyState title="No match" message={`None of your favorites match “${search.trim()}”.`}>
+        <EmptyState title={t('favs.noMatchTitle')} message={t('favs.noMatchMsg', { q: search.trim() })}>
           <button type="button" className="btn btn--ghost" onClick={() => setSearch('')}>
-            Clear search
+            {t('favs.clearSearch')}
           </button>
         </EmptyState>
       ) : (
-        <MovieGrid movies={visible} onRemove={removeFavorite} label="Favorite movies" />
+        <MovieGrid movies={visible} onRemove={removeFavorite} label={t('favs.listLabel')} />
       )}
     </section>
   );

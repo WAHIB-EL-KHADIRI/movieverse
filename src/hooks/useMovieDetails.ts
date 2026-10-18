@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useI18n } from '../i18n/useI18n';
 import { fetchMovieDetails, isAbortError } from '../services/tmdb';
 import type { MovieDetails } from '../types/movie';
 
@@ -16,15 +17,16 @@ export interface MovieDetailsState {
 }
 
 export function useMovieDetails(id: string): MovieDetailsState {
+  const { tmdbLanguage: language } = useI18n();
   const [nonce, setNonce] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
-  const attemptId = `${id}|${nonce}`;
+  const attemptId = `${id}|${language}|${nonce}`;
 
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
 
-    fetchMovieDetails(id, controller.signal)
+    fetchMovieDetails(id, controller.signal, language)
       .then((movie) => {
         if (!cancelled) setResult({ attemptId, movie, error: null });
       })
@@ -36,7 +38,7 @@ export function useMovieDetails(id: string): MovieDetailsState {
       cancelled = true;
       controller.abort();
     };
-  }, [id, attemptId]);
+  }, [id, language, attemptId]);
 
   const retry = useCallback(() => setNonce((n) => n + 1), []);
   const current = result?.attemptId === attemptId ? result : null;
