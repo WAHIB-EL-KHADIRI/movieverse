@@ -32,9 +32,20 @@ export function TrailerPlayer({ videoKey, title }: Props) {
         allowFullScreen
         referrerPolicy="strict-origin-when-cross-origin"
       />
-      <button type="button" className="btn btn--ghost" onClick={() => setOpen(false)}>
-        Close trailer
-      </button>
+      <div className="actions">
+        <button type="button" className="btn btn--ghost" onClick={() => setOpen(false)}>
+          Close trailer
+        </button>
+        {/* Some uploaders disable embedding or block regions; the watch page still works. */}
+        <a
+          className="btn btn--ghost"
+          href={`https://www.youtube.com/watch?v=${encodeURIComponent(videoKey)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Not playing? Watch on YouTube
+        </a>
+      </div>
     </div>
   );
 }

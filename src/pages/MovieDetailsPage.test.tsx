@@ -33,6 +33,11 @@ describe('Movie details page', () => {
     const frame = screen.getByTitle(/alpha rising — trailer/i);
     expect(frame).toHaveAttribute('src', expect.stringMatching(/^https:\/\/www\.youtube-nocookie\.com\/embed\/OFFICIAL_ab-1\?/));
 
+    expect(screen.getByRole('link', { name: /watch on youtube/i })).toHaveAttribute(
+      'href',
+      'https://www.youtube.com/watch?v=OFFICIAL_ab-1',
+    );
+
     await user.click(screen.getByRole('button', { name: /close trailer/i }));
     expect(document.querySelector('iframe')).toBeNull();
   });
