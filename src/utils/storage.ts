@@ -37,10 +37,12 @@ export function parseFavorites(raw: string | null): FavoriteMovie[] {
   } catch {
     return [];
   }
-  if (!Array.isArray(data)) return [];
+  // Accept both the raw stored array and the export envelope { favorites: [...] }.
+  const list: unknown = Array.isArray(data) ? data : (data as { favorites?: unknown } | null)?.favorites;
+  if (!Array.isArray(list)) return [];
   const seen = new Set<number>();
   const result: FavoriteMovie[] = [];
-  for (const item of data) {
+  for (const item of list) {
     if (isFavorite(item) && !seen.has(item.id)) {
       seen.add(item.id);
       result.push({
@@ -74,4 +76,19 @@ export function saveFavorites(favorites: readonly FavoriteMovie[]): boolean {
   } catch {
     return false;
   }
+}
+
+/** Adds `incoming` entries whose IDs are not already present (existing entries win). */
+export function mergeFavorites(
+  current: readonly FavoriteMovie[],
+  incoming: readonly FavoriteMovie[],
+): { merged: FavoriteMovie[]; added: number } {
+  const known = new Set(current.map((f) => f.id));
+  const fresh = incoming.filter((f) => !known.has(f.id));
+  return { merged: [...current, ...fresh], added: fresh.length };
+}
+
+/** JSON document used by the Export button (re-importable via parseFavorites). */
+export function serializeFavorites(favorites: readonly FavoriteMovie[]): string {
+  return JSON.stringify({ app: 'movieverse', version: 1, exportedAt: new Date().toISOString(), favorites }, null, 2);
 }

@@ -1,6 +1,6 @@
 # PROJECT_STATUS
 
-Verified on Node 22 / npm 10. Last full run: `typecheck` (0 errors), `lint` (0 errors), `vitest` (9 files, 121 tests, all passed), `vite build` (success).
+Verified on Node 22 / npm 10. Last full run: `typecheck` (0 errors), `lint` (0 errors), `vitest` (9 files, 146 tests, all passed), `vite build` (success).
 
 **Important limit of verification:** no real TMDB key was available, so nothing was exercised against the live TMDB API. All API behaviour is verified against an MSW mock whose shapes follow the TMDB docs. Status values below say so explicitly.
 
@@ -37,6 +37,7 @@ Legend: PASS = verified by automated tests/commands listed; BLOCKED = needs some
 | Pagination | PASS (mocked API) | "paginates with Load more and stops at the last page" (also de-duplicates) |
 | Genre filter, trailer (click-to-load), cast, similar movies, `/` search shortcut (extras beyond the brief) | PASS (mocked API + live endpoints return 200) | `tmdb.test.ts`, `TrendingPage.test.tsx`, `MovieDetailsPage.test.tsx`, `components.test.tsx`; UI not visually checked by me |
 | Hero carousel, rating rings, card hover overview, entrance animation | PASS (logic tests: dots, auto-rotate, pause, reduced motion, ring a11y); visual quality NOT verified by me in a browser | `components.test.tsx` |
+| Command palette (Ctrl+K), Surprise me, favorites sort/filter/stats/export/import | PASS (mocked API; real `/discover` already verified 200) | `CommandPalette.test.tsx`, `FavoritesTools.test.tsx`, `favorites.test.ts`, `storage.test.ts`, `TrendingPage.test.tsx`; visual check not done by me |
 | Dark mode | PASS (code) | Dark default + light toggle persisted in localStorage; toggle itself has no automated test |
 
 ## Acceptance checks
@@ -45,7 +46,7 @@ Legend: PASS = verified by automated tests/commands listed; BLOCKED = needs some
 |---|---|
 | `npm run typecheck` | 0 errors |
 | `npm run lint` | 0 errors, 0 warnings |
-| `npm test` | 121 / 121 passed |
+| `npm test` | 146 / 146 passed |
 | `npm run build` | success |
 | `npm audit` | 0 vulnerabilities |
 | Secrets in files to deliver | none; `.env` is git-ignored, `.env.example` has a placeholder |
@@ -53,6 +54,7 @@ Legend: PASS = verified by automated tests/commands listed; BLOCKED = needs some
 
 ## Known issues / caveats
 
+- Under heavy machine load vitest workers occasionally fail to start ("Timeout waiting for worker"); that is an environment issue, re-running (or `--pool=threads`) passes.
 - One test (`MovieDetailsPage` first test) failed once in a loaded full-suite run before I made its `document.title` assertion wait for the effect. I did not capture that failure's message, so the cause is my best hypothesis, not proven. Since the change, 6 consecutive full runs plus the final run passed.
 - Sorting of **search** results is client-side over loaded pages only (TMDB `/search` has no sort); the UI says so.
 - No Playwright E2E tests; no visual/cross-browser check; accessibility is by construction and RTL role queries, not an audit tool run.

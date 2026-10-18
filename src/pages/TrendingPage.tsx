@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { EmptyState } from '../components/feedback/EmptyState';
 import { ErrorState } from '../components/feedback/ErrorState';
 import { MovieGridSkeleton } from '../components/feedback/LoadingSkeleton';
@@ -10,7 +10,7 @@ import { SearchBar } from '../components/search/SearchBar';
 import { useDebounce } from '../hooks/useDebounce';
 import { useGenres } from '../hooks/useGenres';
 import { useMovieList } from '../hooks/useMovieList';
-import { errorMessage } from '../services/tmdb';
+import { errorMessage, fetchRandomMovie } from '../services/tmdb';
 import type { SortOption } from '../types/movie';
 
 export const SEARCH_DEBOUNCE_MS = 400;
@@ -26,6 +26,8 @@ const parseGenre = (v: string | null): string => (v && /^\d{1,6}$/.test(v) ? v :
  */
 export function TrendingPage() {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [surprise, setSurprise] = useState<{ busy: boolean; error: string | null }>({ busy: false, error: null });
   const urlQuery = params.get('q') ?? '';
   const year = parseYear(params.get('year'));
   const sort = parseSort(params.get('sort'));
@@ -70,6 +72,16 @@ export function TrendingPage() {
   const isDefaultView = !searching && !year && !genre && sort === 'default';
   const heroMovies = isDefaultView ? movies.filter((m) => m.backdropPath).slice(0, 5) : [];
 
+  const surpriseMe = async () => {
+    setSurprise({ busy: true, error: null });
+    try {
+      const movie = await fetchRandomMovie();
+      navigate(`/movie/${movie.id}`);
+    } catch (e) {
+      setSurprise({ busy: false, error: errorMessage(e) });
+    }
+  };
+
   const reset = () => update({ year: '', sort: '', genre: '' });
   const clearAll = () => {
     setText('');
@@ -104,7 +116,15 @@ export function TrendingPage() {
           </h1>
           {year && <span className="chip">Year: {year}</span>}
           {genreName && <span className="chip">Genre: {genreName}</span>}
+          <button type="button" className="btn btn--ghost surprise" onClick={surpriseMe} disabled={surprise.busy}>
+            {surprise.busy ? 'Picking…' : '🎲 Surprise me'}
+          </button>
         </div>
+        {surprise.error && (
+          <p className="notice" role="alert">
+            {surprise.error}
+          </p>
+        )}
         {searching && sort !== 'default' && (
           <p className="hint">Search results are sorted among the movies loaded so far. Load more to extend the ordering.</p>
         )}

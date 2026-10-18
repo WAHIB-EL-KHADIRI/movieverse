@@ -22,7 +22,9 @@ A fast, accessible movie-discovery app built with **React 19 + Vite + TypeScript
 - **Movie details** – poster, title, tagline, overview, genres, runtime, rating, release date, Add/Remove favorite. Invalid IDs and 404s have dedicated messages; failures can be retried.
 - **Trailer, cast & similar movies** – the details page loads trailer, top cast and "More like this" in a **single** request (`append_to_response`, no N+1). The trailer is click-to-load from `youtube-nocookie.com`, and video keys are validated before they reach an iframe URL.
 - **Genre filter** – server-side through `/discover/movie?with_genres` when browsing, client-side over the loaded results when searching (hidden gracefully if the genre list cannot load).
-- **Keyboard shortcut** – press `/` anywhere to jump to the search box.
+- **Keyboard shortcuts** – press `/` to jump to the search box, or `Ctrl/⌘ + K` for a **command palette**: instant, debounced search from any page with arrow-key navigation, Enter to open, Esc to close (stale responses are discarded).
+- **Surprise me** – opens a random, well-known, well-rated movie.
+- **Favorites power tools** – sort (recent / title / rating / release), filter by title, live statistics (count, average rating, years covered), and **Export / Import** as a JSON file (imports are validated and merged without duplicates).
 - **Favorites** – dedicated page, stored in `localStorage`, deduplicated by TMDB ID, restored on reload, synced between every page (and between browser tabs). Corrupted JSON or unavailable storage never crashes the app.
 - **UI** – cinematic dark theme with a light-mode toggle, responsive grid (phones → desktops), keyboard navigation, visible focus rings, skip link, `prefers-reduced-motion` support, semantic HTML and alt text.
 - **URL-driven state** – `?q=&year=&sort=` live in the URL, so *Back* from a movie restores your search and views are shareable.

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { FavoritesContext } from '../../hooks/useFavorites';
 import type { FavoritesContextValue } from '../../hooks/useFavorites';
 import type { FavoriteMovie } from '../../types/movie';
-import { FAVORITES_STORAGE_KEY, loadFavorites, saveFavorites } from '../../utils/storage';
+import { FAVORITES_STORAGE_KEY, loadFavorites, mergeFavorites, saveFavorites } from '../../utils/storage';
 
 /**
  * Single source of truth for favourites. Every page reads from this context, so the heart
@@ -55,15 +55,25 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   const removeFavorite = useCallback((id: number) => commit(latest.current.filter((f) => f.id !== id)), [commit]);
 
+  const importFavorites = useCallback(
+    (items: FavoriteMovie[]) => {
+      const { merged, added } = mergeFavorites(latest.current, items);
+      if (added > 0) commit(merged);
+      return added;
+    },
+    [commit],
+  );
+
   const value = useMemo<FavoritesContextValue>(
     () => ({
       favorites,
       isFavorite: (id) => favorites.some((f) => f.id === id),
       toggleFavorite,
       removeFavorite,
+      importFavorites,
       persistent,
     }),
-    [favorites, persistent, toggleFavorite, removeFavorite],
+    [favorites, persistent, toggleFavorite, removeFavorite, importFavorites],
   );
 
   return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;

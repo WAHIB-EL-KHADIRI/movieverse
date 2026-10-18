@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useFavorites } from '../../hooks/useFavorites';
+import { CommandPalette } from '../search/CommandPalette';
 
 type Theme = 'dark' | 'light';
 const THEME_KEY = 'movieverse:theme';
@@ -58,6 +59,7 @@ export function Header() {
             </li>
           </ul>
         </nav>
+        <CommandPalette />
         <ThemeToggle />
       </div>
     </header>

@@ -265,6 +265,30 @@ describe('Trending page', () => {
     });
   });
 
+  it('"Surprise me" opens a random well-rated movie', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0); // first page, first result
+    const user = userEvent.setup();
+    const { router } = renderApp();
+    await screen.findByRole('heading', { name: 'Gamma Ray', level: 3 });
+
+    await user.click(screen.getByRole('button', { name: /surprise me/i }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/movie/3')); // most popular fixture
+    const call = requestLog.find((r) => r.includes('vote_count.gte=1000'));
+    expect(call).toContain('/discover/movie?');
+    expect(call).toContain('vote_average.gte=6.5');
+  });
+
+  it('"Surprise me" shows an error and re-enables the button when the request fails', async () => {
+    server.use(http.get(`${API}/discover/movie`, () => new HttpResponse(null, { status: 500 })));
+    const user = userEvent.setup();
+    renderApp();
+    await screen.findByRole('heading', { name: 'Gamma Ray', level: 3 });
+
+    await user.click(screen.getByRole('button', { name: /surprise me/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/TMDB is having trouble/i);
+    expect(screen.getByRole('button', { name: /surprise me/i })).toBeEnabled();
+  });
+
   it('keeps the search when navigating to a movie and back', async () => {
     const user = userEvent.setup();
     const { router } = renderApp('/?q=alpha');

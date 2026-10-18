@@ -7,6 +7,8 @@ export interface FavoritesContextValue {
   isFavorite: (id: number) => boolean;
   toggleFavorite: (movie: Pick<MovieSummary, 'id' | 'title' | 'posterPath' | 'releaseDate' | 'voteAverage'>) => void;
   removeFavorite: (id: number) => void;
+  /** Merges entries (existing ones win, IDs deduplicated). Returns how many were new. */
+  importFavorites: (items: FavoriteMovie[]) => number;
   /** False when the last write to localStorage failed (favourites then live only in memory). */
   persistent: boolean;
 }

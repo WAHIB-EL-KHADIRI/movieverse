@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FavoriteMovie } from '../types/movie';
-import { FAVORITES_STORAGE_KEY, loadFavorites, parseFavorites, saveFavorites } from './storage';
+import { FAVORITES_STORAGE_KEY, loadFavorites, mergeFavorites, parseFavorites, saveFavorites, serializeFavorites } from './storage';
 
 const fav = (id: number): FavoriteMovie => ({
   id,
@@ -65,5 +65,26 @@ describe('favorites storage', () => {
       throw new DOMException('quota', 'QuotaExceededError');
     });
     expect(saveFavorites([fav(1)])).toBe(false);
+  });
+});
+
+describe('favorites import / export helpers', () => {
+  it('serialises to an envelope that parseFavorites can read back', () => {
+    const json = serializeFavorites([fav(1), fav(2)]);
+    expect(JSON.parse(json)).toMatchObject({ app: 'movieverse', version: 1 });
+    expect(parseFavorites(json)).toEqual([fav(1), fav(2)]);
+  });
+
+  it('still accepts a bare array and drops garbage inside an envelope', () => {
+    expect(parseFavorites(JSON.stringify([fav(3)]))).toEqual([fav(3)]);
+    expect(parseFavorites(JSON.stringify({ favorites: [fav(4), { id: 'x' }] }))).toEqual([fav(4)]);
+    expect(parseFavorites(JSON.stringify({ favorites: 'nope' }))).toEqual([]);
+  });
+
+  it('merges without duplicating IDs and keeps existing entries', () => {
+    const existing = [{ ...fav(1), title: 'Mine' }];
+    const { merged, added } = mergeFavorites(existing, [fav(1), fav(2)]);
+    expect(added).toBe(1);
+    expect(merged.map((f) => f.title)).toEqual(['Mine', 'Movie 2']);
   });
 });

@@ -294,6 +294,29 @@ export async function fetchMovieDetails(id: string, signal?: AbortSignal): Promi
   };
 }
 
+/**
+ * "Surprise me": a random well-rated, well-known movie. Picks a random page of
+ * /discover (popular, decent score, enough votes) and then a random result.
+ */
+export async function fetchRandomMovie(signal?: AbortSignal, random: () => number = Math.random): Promise<MovieSummary> {
+  const page = 1 + Math.floor(random() * 20);
+  const data = await request(
+    '/discover/movie',
+    {
+      page,
+      sort_by: 'popularity.desc',
+      'vote_count.gte': 1000,
+      'vote_average.gte': 6.5,
+      include_adult: 'false',
+    },
+    signal,
+  );
+  const { results } = parsePage(data);
+  const movie = results[Math.floor(random() * results.length)];
+  if (!movie) throw new TmdbError('not-found');
+  return movie;
+}
+
 export async function fetchGenres(signal?: AbortSignal): Promise<Genre[]> {
   const data = await request('/genre/movie/list', {}, signal);
   return parseGenres(asRecord(data).genres);
