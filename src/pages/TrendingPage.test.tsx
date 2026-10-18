@@ -298,7 +298,7 @@ describe('Trending page', () => {
     expect(await screen.findByRole('heading', { name: 'Alpha Rising', level: 1 })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/movie/1');
 
-    await user.click(screen.getByRole('button', { name: /back/i }));
+    await user.click(screen.getByRole('button', { name: /^← back/i }));
     await screen.findByRole('heading', { name: 'Alpha Rising', level: 3 });
     expect(searchBox()).toHaveValue('alpha');
     expect(router.state.location.search).toBe('?q=alpha');

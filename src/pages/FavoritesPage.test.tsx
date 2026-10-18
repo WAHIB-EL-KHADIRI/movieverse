@@ -24,7 +24,7 @@ describe('Favorites', () => {
     expect(screen.getByRole('button', { name: 'Remove from Favorites' })).toHaveAttribute('aria-pressed', 'true');
     expect(stored().map((f) => f.id)).toEqual([1]);
 
-    await user.click(within(screen.getByRole('navigation')).getByRole('link', { name: /favorites/i }));
+    await user.click(within(screen.getByRole('navigation', { name: 'Main' })).getByRole('link', { name: /favorites/i }));
     const grid = await screen.findByRole('list', { name: /favorite movies/i });
     expect(within(grid).getByRole('heading', { name: 'Alpha Rising' })).toBeInTheDocument();
 
@@ -70,7 +70,7 @@ describe('Favorites', () => {
     expect(await screen.findByRole('button', { name: 'Remove from Favorites' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Remove from Favorites' }));
-    await user.click(screen.getByRole('button', { name: /back/i }));
+    await user.click(screen.getByRole('button', { name: /^← back/i }));
     expect(await screen.findByRole('button', { name: 'Add Beta Protocol to favorites' })).toHaveAttribute('aria-pressed', 'false');
     expect(screen.queryByLabelText('1 saved')).not.toBeInTheDocument();
   });
@@ -123,7 +123,7 @@ describe('Favorites', () => {
     await user.click(screen.getByRole('button', { name: 'Add to Favorites' }));
     expect(screen.getByRole('button', { name: 'Remove from Favorites' })).toBeInTheDocument(); // UI still updates
 
-    await user.click(within(screen.getByRole('navigation')).getByRole('link', { name: /favorites/i }));
+    await user.click(within(screen.getByRole('navigation', { name: 'Main' })).getByRole('link', { name: /favorites/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent(/blocked saving/i);
     expect(screen.getByRole('heading', { name: 'Alpha Rising' })).toBeInTheDocument();
   });
