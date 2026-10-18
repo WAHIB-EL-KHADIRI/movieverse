@@ -68,7 +68,7 @@ export function TrendingPage() {
   const searching = urlQuery.trim().length > 0;
   const pendingSearch = text.trim() !== urlQuery.trim();
   const isDefaultView = !searching && !year && !genre && sort === 'default';
-  const heroMovie = isDefaultView ? movies.find((m) => m.backdropPath) : undefined;
+  const heroMovies = isDefaultView ? movies.filter((m) => m.backdropPath).slice(0, 5) : [];
 
   const reset = () => update({ year: '', sort: '', genre: '' });
   const clearAll = () => {
@@ -80,7 +80,7 @@ export function TrendingPage() {
 
   return (
     <>
-      {heroMovie && <Hero movie={heroMovie} />}
+      {heroMovies.length > 0 && <Hero movies={heroMovies} />}
 
       <section className="toolbar" aria-label="Search and filters">
         <SearchBar value={text} onChange={setText} busy={pendingSearch || (searching && status === 'loading')} />

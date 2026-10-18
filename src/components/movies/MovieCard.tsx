@@ -6,7 +6,7 @@ import { Poster } from './Poster';
 import { Rating } from './Rating';
 
 /** Works for both API results and stored favourites. */
-type CardMovie = Omit<FavoriteMovie, 'addedAt'> & { voteCount?: number };
+type CardMovie = Omit<FavoriteMovie, 'addedAt'> & { voteCount?: number; overview?: string };
 
 interface Props {
   movie: CardMovie;
@@ -21,11 +21,18 @@ export function MovieCard({ movie, onRemove, priority }: Props) {
       <Link to={`/movie/${movie.id}`} className="movie-card__link" aria-label={`${movie.title} — view details`}>
         <div className="movie-card__poster">
           <Poster path={movie.posterPath} title={movie.title} priority={priority} />
+          {movie.overview && (
+            <div className="movie-card__overlay" aria-hidden="true">
+              <p>{movie.overview}</p>
+            </div>
+          )}
+          <div className="movie-card__score">
+            <Rating value={movie.voteAverage} votes={movie.voteCount} variant="ring" />
+          </div>
         </div>
         <div className="movie-card__info">
           <h3 className="movie-card__title">{movie.title}</h3>
           <div className="movie-card__meta">
-            <Rating value={movie.voteAverage} votes={movie.voteCount} />
             <time dateTime={movie.releaseDate || undefined}>{formatReleaseDate(movie.releaseDate)}</time>
           </div>
         </div>

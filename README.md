@@ -15,6 +15,7 @@ A fast, accessible movie-discovery app built with **React 19 + Vite + TypeScript
 
 ## Features
 
+- **Cinematic UI** – auto-rotating hero spotlight (top 5 trending; pauses on hover/focus, never rotates for reduced-motion users), colour-coded rating rings, staggered card entrance, hover overview on cards, ambient glow background.
 - **Trending** – weekly trending movies with a hero banner, poster cards (poster, title, rating, release date), skeleton loading, error and empty states, and "Load more" pagination that stops at the last page.
 - **Search** – by title, with a 400 ms debounce, no request for blank input, cancellation of outdated requests (`AbortController`) *and* discarding of late responses, so stale results can never replace newer ones.
 - **Filter & sort** – release year plus Popularity / Rating / Release date. Without a text query, filtering and sorting happen **on TMDB's side via `/discover/movie`**, so the order is global across the whole catalogue, not just the loaded page.

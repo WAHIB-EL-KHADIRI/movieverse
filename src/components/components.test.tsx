@@ -1,11 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { ErrorState } from './feedback/ErrorState';
 import { FavoritesProvider } from './favorites/FavoritesProvider';
 import { FilterBar } from './filters/FilterBar';
+import { Hero } from './movies/Hero';
 import { MovieCard } from './movies/MovieCard';
+import { Rating } from './movies/Rating';
 import { SearchBar } from './search/SearchBar';
 
 const movie = {
@@ -146,5 +148,96 @@ describe('ErrorState', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Boom');
     await userEvent.click(screen.getByRole('button', { name: /try again/i }));
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Rating ring', () => {
+  it('exposes the score to assistive tech and shows the number', () => {
+    render(<Rating value={7.84} votes={50} variant="ring" />);
+    expect(screen.getByRole('img', { name: 'Rated 7.8 out of 10' })).toHaveTextContent('7.8');
+  });
+
+  it('shows "NR" for unrated movies', () => {
+    render(<Rating value={0} votes={0} variant="ring" />);
+    expect(screen.getByRole('img', { name: 'Not rated yet' })).toHaveTextContent('NR');
+  });
+
+  it('fills the ring proportionally to the score', () => {
+    const { container } = render(<Rating value={5} votes={9} variant="ring" />);
+    const arc = container.querySelector('.ring__value')!;
+    const circumference = Number(arc.getAttribute('stroke-dasharray'));
+    expect(Number(arc.getAttribute('stroke-dashoffset'))).toBeCloseTo(circumference / 2, 5);
+  });
+});
+
+describe('Hero spotlight', () => {
+  const slides = [1, 2, 3].map((id) => ({
+    id,
+    title: `Slide ${id}`,
+    overview: `Overview ${id}`,
+    posterPath: null,
+    backdropPath: `/b${id}.jpg`,
+    releaseDate: '2024-01-01',
+    voteAverage: 7,
+    voteCount: 10,
+    popularity: 1,
+    genreIds: [],
+  }));
+  const renderHero = () =>
+    render(
+      <MemoryRouter>
+        <Hero movies={slides} />
+      </MemoryRouter>,
+    );
+
+  it('lets the user pick a featured movie with the dots', async () => {
+    const user = userEvent.setup();
+    renderHero();
+    expect(screen.getByRole('heading', { name: 'Slide 1' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Show Slide 3' }));
+    expect(screen.getByRole('heading', { name: 'Slide 3' })).toBeInTheDocument();
+    expect(screen.getByText('#3 trending this week')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /view details/i })).toHaveAttribute('href', '/movie/3');
+  });
+
+  it('rotates automatically, wraps around, and pauses while hovered', () => {
+    vi.useFakeTimers();
+    try {
+      renderHero();
+      act(() => void vi.advanceTimersByTime(7000));
+      expect(screen.getByRole('heading', { name: 'Slide 2' })).toBeInTheDocument();
+
+      fireEvent.mouseEnter(screen.getByRole('region'));
+      act(() => void vi.advanceTimersByTime(30_000));
+      expect(screen.getByRole('heading', { name: 'Slide 2' })).toBeInTheDocument(); // paused
+
+      fireEvent.mouseLeave(screen.getByRole('region'));
+      act(() => void vi.advanceTimersByTime(14_000));
+      expect(screen.getByRole('heading', { name: 'Slide 1' })).toBeInTheDocument(); // 2 → 3 → 1
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not auto-rotate when the user prefers reduced motion', () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    try {
+      renderHero();
+      act(() => void vi.advanceTimersByTime(30_000));
+      expect(screen.getByRole('heading', { name: 'Slide 1' })).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+      vi.useRealTimers();
+    }
+  });
+
+  it('shows no dots for a single slide', () => {
+    render(
+      <MemoryRouter>
+        <Hero movies={slides.slice(0, 1)} />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole('group', { name: /featured/i })).not.toBeInTheDocument();
   });
 });
