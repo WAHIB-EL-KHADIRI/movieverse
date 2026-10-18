@@ -1,6 +1,6 @@
 import { delay, http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import { RAW_DETAILS, RAW_MOVIES } from './fixtures';
+import { RAW_DETAILS, RAW_GENRES, RAW_MOVIES } from './fixtures';
 import type { RawFixture } from './fixtures';
 
 export const API = 'https://api.themoviedb.org/3';
@@ -39,13 +39,17 @@ export const handlers = [
     requestLog.push(logEntry(request));
     const url = new URL(request.url);
     const year = url.searchParams.get('primary_release_year');
+    const genre = Number(url.searchParams.get('with_genres')) || 0;
     const sortBy = url.searchParams.get('sort_by') ?? 'popularity.desc';
     const key = SORT_FIELDS[sortBy] ?? SORT_FIELDS['popularity.desc']!;
-    const results = RAW_MOVIES.filter((m) => !year || m.release_date.startsWith(year)).sort((a, b) =>
+    const results = RAW_MOVIES.filter((m) => (!year || m.release_date.startsWith(year)) && (!genre || m.genre_ids.includes(genre))).sort((a, b) =>
       key(a) < key(b) ? 1 : key(a) > key(b) ? -1 : 0,
     );
     return HttpResponse.json(page(results));
   }),
+
+  // Not logged in requestLog so call-order assertions about movie lists stay simple.
+  http.get(`${API}/genre/movie/list`, () => HttpResponse.json({ genres: RAW_GENRES })),
 
   http.get(`${API}/movie/:id`, ({ request, params }) => {
     requestLog.push(logEntry(request));

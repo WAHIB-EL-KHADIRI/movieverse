@@ -70,10 +70,29 @@ describe('SearchBar', () => {
   });
 });
 
+const GENRES = [
+  { id: 28, name: 'Action' },
+  { id: 18, name: 'Drama' },
+];
+
 describe('FilterBar', () => {
+  it('emits the selected genre and hides the genre select when no genres loaded', async () => {
+    const user = userEvent.setup();
+    const onGenreChange = vi.fn();
+    const noop = () => {};
+    const props = { year: '', sort: 'default', genre: '', searching: false, onYearChange: noop, onSortChange: noop, onReset: noop, onGenreChange } as const;
+    const { rerender } = render(<FilterBar {...props} genres={GENRES} />);
+
+    await user.selectOptions(screen.getByLabelText(/genre/i), 'Drama');
+    expect(onGenreChange).toHaveBeenCalledWith('18');
+
+    rerender(<FilterBar {...props} genres={[]} />);
+    expect(screen.queryByLabelText(/genre/i)).not.toBeInTheDocument();
+  });
+
   const setup = (props: Partial<React.ComponentProps<typeof FilterBar>> = {}) => {
-    const handlers = { onYearChange: vi.fn(), onSortChange: vi.fn(), onReset: vi.fn() };
-    render(<FilterBar year="" sort="default" searching={false} {...handlers} {...props} />);
+    const handlers = { onYearChange: vi.fn(), onSortChange: vi.fn(), onGenreChange: vi.fn(), onReset: vi.fn() };
+    render(<FilterBar year="" sort="default" genre="" genres={GENRES} searching={false} {...handlers} {...props} />);
     return handlers;
   };
 
@@ -101,7 +120,19 @@ describe('FilterBar', () => {
     const { onReset } = setup();
     expect(screen.getByRole('button', { name: /reset filters/i })).toBeDisabled();
     expect(onReset).not.toHaveBeenCalled();
-    render(<FilterBar year="2020" sort="default" searching={false} onYearChange={() => {}} onSortChange={() => {}} onReset={onReset} />);
+    render(
+      <FilterBar
+        year="2020"
+        sort="default"
+        genre=""
+        genres={GENRES}
+        searching={false}
+        onYearChange={() => {}}
+        onSortChange={() => {}}
+        onGenreChange={() => {}}
+        onReset={onReset}
+      />,
+    );
     const buttons = screen.getAllByRole('button', { name: /reset filters/i });
     await user.click(buttons[1]!);
     expect(onReset).toHaveBeenCalledTimes(1);

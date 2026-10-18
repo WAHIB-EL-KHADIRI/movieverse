@@ -210,6 +210,53 @@ describe('Trending page', () => {
       expect(searchCalls()).toHaveLength(1);
     });
 
+    it('filters by genre on TMDB (server-side) and shows it as a chip', async () => {
+      const user = userEvent.setup();
+      renderApp();
+      await screen.findByRole('heading', { name: 'Gamma Ray', level: 3 });
+
+      await user.selectOptions(await screen.findByLabelText(/genre/i), 'Drama');
+      await waitFor(() => expect(titles()).toEqual(['Gamma Ray', 'Beta Protocol']));
+      expect(requestLog.at(-1)).toContain('with_genres=18');
+      expect(screen.getByText('Genre: Drama')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /reset filters/i }));
+      await waitFor(() => expect(titles()).toHaveLength(3));
+      expect(screen.getByLabelText(/genre/i)).toHaveValue('');
+    });
+
+    it('filters search results by genre client-side without re-requesting', async () => {
+      const user = userEvent.setup();
+      renderApp('/?q=a'); // matches all three fixtures
+      await waitFor(() => expect(titles()).toHaveLength(3));
+      expect(searchCalls()).toHaveLength(1);
+
+      await user.selectOptions(await screen.findByLabelText(/genre/i), 'Action');
+      expect(titles()).toEqual(['Alpha Rising', 'Gamma Ray']);
+      expect(searchCalls()).toHaveLength(1);
+      expect(requestLog.some((r) => r.includes('with_genres'))).toBe(false);
+    });
+
+    it('hides the genre filter (instead of failing) when the genre list cannot be loaded', async () => {
+      server.use(http.get(`${API}/genre/movie/list`, () => new HttpResponse(null, { status: 500 })));
+      renderApp();
+      await screen.findByRole('heading', { name: 'Gamma Ray', level: 3 });
+      expect(screen.queryByLabelText(/genre/i)).not.toBeInTheDocument();
+      expect(screen.getByLabelText(/release year/i)).toBeInTheDocument();
+    });
+
+    it('focuses the search box when "/" is pressed', async () => {
+      const user = userEvent.setup();
+      renderApp();
+      await screen.findByRole('heading', { name: 'Gamma Ray', level: 3 });
+      expect(searchBox()).not.toHaveFocus();
+      await user.keyboard('/');
+      expect(searchBox()).toHaveFocus();
+      expect(searchBox()).toHaveValue(''); // the slash itself is not typed
+      await user.keyboard('/');
+      expect(searchBox()).toHaveValue('/'); // while typing, "/" is a normal character
+    });
+
     it('ignores garbage in URL parameters', async () => {
       renderApp('/?year=abcd&sort=hax');
       await screen.findByRole('heading', { name: 'Gamma Ray', level: 3 });

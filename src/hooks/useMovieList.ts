@@ -31,6 +31,8 @@ interface Options {
   query: string;
   year: string;
   sort: SortOption;
+  /** TMDB genre id or empty. Server-side when browsing, client-side over loaded results when searching. */
+  genre?: string;
 }
 
 /**
@@ -40,12 +42,13 @@ interface Options {
  * for an outdated query is aborted and – even if it still resolves – discarded.
  * State is keyed by the filter, so results of one query can never be shown for another.
  */
-export function useMovieList({ query, year, sort }: Options): MovieListState {
+export function useMovieList({ query, year, sort, genre = '' }: Options): MovieListState {
   const trimmed = query.trim();
   const searching = trimmed.length > 0;
-  // In search mode TMDB cannot sort, so sorting happens client-side and must not refetch.
+  // In search mode TMDB can neither sort nor filter by genre, so both happen client-side and must not refetch.
   const fetchSort: SortOption = searching ? 'default' : sort;
-  const filterKey = JSON.stringify([trimmed, year, fetchSort]);
+  const fetchGenre = searching ? '' : genre;
+  const filterKey = JSON.stringify([trimmed, year, fetchSort, fetchGenre]);
 
   const [requested, setRequested] = useState({ filterKey, page: 1 });
   const [loaded, setLoaded] = useState<Loaded | null>(null);
@@ -59,7 +62,7 @@ export function useMovieList({ query, year, sort }: Options): MovieListState {
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
-    const request: ListQuery = { query: trimmed, year, sort: fetchSort, page };
+    const request: ListQuery = { query: trimmed, year, sort: fetchSort, page, genre: fetchGenre };
 
     fetchMovies(request, controller.signal)
       .then((result) => {
@@ -80,11 +83,16 @@ export function useMovieList({ query, year, sort }: Options): MovieListState {
       cancelled = true;
       controller.abort();
     };
-  }, [trimmed, year, fetchSort, page, filterKey, attemptId]);
+  }, [trimmed, year, fetchSort, fetchGenre, page, filterKey, attemptId]);
 
   const current = loaded?.filterKey === filterKey ? loaded : null;
   const failure = failed?.attemptId === attemptId ? failed : null;
-  const movies = current ? (searching ? sortMovies(current.movies, sort) : current.movies) : [];
+  let movies = current ? current.movies : [];
+  if (searching) {
+    const wanted = Number(genre);
+    if (genre) movies = movies.filter((m) => m.genreIds.includes(wanted));
+    movies = sortMovies(movies, sort);
+  }
   const hasMore = !!current && current.page < current.totalPages;
 
   let status: ListStatus;

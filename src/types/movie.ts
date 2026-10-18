@@ -8,6 +8,7 @@ export interface MovieSummary {
   voteAverage: number;
   voteCount: number;
   popularity: number;
+  genreIds: number[];
 }
 
 export interface Genre {
@@ -15,10 +16,21 @@ export interface Genre {
   name: string;
 }
 
+export interface CastMember {
+  id: number;
+  name: string;
+  character: string;
+  profilePath: string | null;
+}
+
 export interface MovieDetails extends MovieSummary {
   genres: Genre[];
   runtime: number | null;
   tagline: string;
+  /** YouTube video key of the best trailer, validated to be URL-safe. */
+  trailerKey: string | null;
+  cast: CastMember[];
+  similar: MovieSummary[];
 }
 
 export interface MoviePage {
@@ -51,6 +63,10 @@ export interface RawMovie {
   vote_count?: unknown;
   popularity?: unknown;
   genres?: unknown;
+  genre_ids?: unknown;
+  videos?: unknown;
+  credits?: unknown;
+  similar?: unknown;
   runtime?: unknown;
   tagline?: unknown;
 }

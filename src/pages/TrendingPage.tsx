@@ -8,6 +8,7 @@ import { Hero } from '../components/movies/Hero';
 import { MovieGrid } from '../components/movies/MovieGrid';
 import { SearchBar } from '../components/search/SearchBar';
 import { useDebounce } from '../hooks/useDebounce';
+import { useGenres } from '../hooks/useGenres';
 import { useMovieList } from '../hooks/useMovieList';
 import { errorMessage } from '../services/tmdb';
 import type { SortOption } from '../types/movie';
@@ -17,6 +18,7 @@ const SORTS: SortOption[] = ['default', 'popularity', 'rating', 'release'];
 
 const parseSort = (v: string | null): SortOption => (SORTS.includes(v as SortOption) ? (v as SortOption) : 'default');
 const parseYear = (v: string | null): string => (v && /^\d{4}$/.test(v) ? v : '');
+const parseGenre = (v: string | null): string => (v && /^\d{1,6}$/.test(v) ? v : '');
 
 /**
  * Filters live in the URL (?q=&year=&sort=) so that going to a movie and pressing Back
@@ -27,6 +29,9 @@ export function TrendingPage() {
   const urlQuery = params.get('q') ?? '';
   const year = parseYear(params.get('year'));
   const sort = parseSort(params.get('sort'));
+  const genre = parseGenre(params.get('genre'));
+  const genres = useGenres();
+  const genreName = genres.find((g) => String(g.id) === genre)?.name;
 
   const [text, setText] = useState(urlQuery);
   const debounced = useDebounce(text, SEARCH_DEBOUNCE_MS);
@@ -59,13 +64,13 @@ export function TrendingPage() {
     }
   }, [debounced, urlQuery, setParams]);
 
-  const { movies, status, error, hasMore, loadMore, retry } = useMovieList({ query: urlQuery, year, sort });
+  const { movies, status, error, hasMore, loadMore, retry } = useMovieList({ query: urlQuery, year, sort, genre });
   const searching = urlQuery.trim().length > 0;
   const pendingSearch = text.trim() !== urlQuery.trim();
-  const isDefaultView = !searching && !year && sort === 'default';
+  const isDefaultView = !searching && !year && !genre && sort === 'default';
   const heroMovie = isDefaultView ? movies.find((m) => m.backdropPath) : undefined;
 
-  const reset = () => update({ year: '', sort: '' });
+  const reset = () => update({ year: '', sort: '', genre: '' });
   const clearAll = () => {
     setText('');
     setParams({}, { replace: true });
@@ -82,7 +87,10 @@ export function TrendingPage() {
         <FilterBar
           year={year}
           sort={sort}
+          genre={genre}
+          genres={genres}
           searching={searching}
+          onGenreChange={(g) => update({ genre: g })}
           onYearChange={(y) => update({ year: y })}
           onSortChange={(s) => update({ sort: s === 'default' ? '' : s })}
           onReset={reset}
@@ -95,6 +103,7 @@ export function TrendingPage() {
             {heading}
           </h1>
           {year && <span className="chip">Year: {year}</span>}
+          {genreName && <span className="chip">Genre: {genreName}</span>}
         </div>
         {searching && sort !== 'default' && (
           <p className="hint">Search results are sorted among the movies loaded so far. Load more to extend the ordering.</p>
@@ -113,6 +122,11 @@ export function TrendingPage() {
                 : 'No movies match these filters.'
             }
           >
+            {hasMore && (
+              <button type="button" className="btn btn--ghost" onClick={loadMore}>
+                Load more results
+              </button>
+            )}
             <button type="button" className="btn btn--ghost" onClick={clearAll}>
               Clear search &amp; filters
             </button>

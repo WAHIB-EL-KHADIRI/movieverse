@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 
 interface Props {
   value: string;
@@ -8,6 +8,22 @@ interface Props {
 
 export function SearchBar({ value, onChange, busy = false }: Props) {
   const id = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Press "/" anywhere (outside form fields) to jump to the search box.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const typing = !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable);
+      if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   return (
     <form className="search" role="search" onSubmit={(e) => e.preventDefault()}>
       <label htmlFor={id} className="sr-only">
@@ -19,10 +35,11 @@ export function SearchBar({ value, onChange, busy = false }: Props) {
       </svg>
       <input
         id={id}
+        ref={inputRef}
         className="search__input"
         type="search"
         autoComplete="off"
-        placeholder="Search movies by title…"
+        placeholder="Search movies by title…  (press / to focus)"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

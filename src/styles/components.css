@@ -651,3 +651,80 @@
     margin: 0;
   }
 }
+
+/* ---------- details extras: actions, trailer, cast, similar ---------- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.trailer {
+  display: grid;
+  gap: var(--space-3);
+  width: min(100%, 720px);
+}
+
+.trailer iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: var(--radius);
+  background: #000;
+}
+
+.extra {
+  margin-top: var(--space-6);
+  display: grid;
+  gap: var(--space-4);
+}
+
+.extra .details__subtitle {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.cast {
+  display: flex;
+  gap: var(--space-4);
+  overflow-x: auto;
+  padding-bottom: var(--space-3);
+  scroll-snap-type: x proximity;
+}
+
+.cast__item {
+  flex: 0 0 110px;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: var(--space-1);
+  scroll-snap-align: start;
+}
+
+.cast__avatar {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-card);
+}
+
+.cast__avatar--fallback {
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: linear-gradient(160deg, var(--bg-hover), var(--bg-card));
+}
+
+.cast__name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.cast__role {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.25;
+}

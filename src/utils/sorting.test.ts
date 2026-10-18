@@ -12,6 +12,7 @@ const movie = (id: number, over: Partial<MovieSummary> = {}): MovieSummary => ({
   voteAverage: 5,
   voteCount: 100,
   popularity: 1,
+  genreIds: [],
   ...over,
 });
 

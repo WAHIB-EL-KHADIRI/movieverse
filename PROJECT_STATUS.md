@@ -1,6 +1,6 @@
 # PROJECT_STATUS
 
-Verified on Node 22 / npm 10. Last full run: `typecheck` (0 errors), `lint` (0 errors), `vitest` (9 files, 98 tests, all passed), `vite build` (success).
+Verified on Node 22 / npm 10. Last full run: `typecheck` (0 errors), `lint` (0 errors), `vitest` (9 files, 114 tests, all passed), `vite build` (success).
 
 **Important limit of verification:** no real TMDB key was available, so nothing was exercised against the live TMDB API. All API behaviour is verified against an MSW mock whose shapes follow the TMDB docs. Status values below say so explicitly.
 
@@ -35,6 +35,7 @@ Legend: PASS = verified by automated tests/commands listed; BLOCKED = needs some
 | Skeleton loading | PASS | `LoadingSkeleton.tsx`, asserted in Trending/Details tests |
 | Responsive design | NOT VERIFIED visually | CSS grid + breakpoints written; no browser screenshot/device test was run |
 | Pagination | PASS (mocked API) | "paginates with Load more and stops at the last page" (also de-duplicates) |
+| Genre filter, trailer (click-to-load), cast, similar movies, `/` search shortcut (extras beyond the brief) | PASS (mocked API + live endpoints return 200) | `tmdb.test.ts`, `TrendingPage.test.tsx`, `MovieDetailsPage.test.tsx`, `components.test.tsx`; UI not visually checked by me |
 | Dark mode | PASS (code) | Dark default + light toggle persisted in localStorage; toggle itself has no automated test |
 
 ## Acceptance checks
@@ -43,7 +44,7 @@ Legend: PASS = verified by automated tests/commands listed; BLOCKED = needs some
 |---|---|
 | `npm run typecheck` | 0 errors |
 | `npm run lint` | 0 errors, 0 warnings |
-| `npm test` | 98 / 98 passed |
+| `npm test` | 114 / 114 passed |
 | `npm run build` | success |
 | `npm audit` | 0 vulnerabilities |
 | Secrets in files to deliver | none; `.env` is git-ignored, `.env.example` has a placeholder |

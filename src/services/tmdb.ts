@@ -1,4 +1,4 @@
-import type { Genre, MovieDetails, MoviePage, MovieSummary, RawMovie, SortOption } from '../types/movie';
+import type { CastMember, Genre, MovieDetails, MoviePage, MovieSummary, RawMovie, SortOption } from '../types/movie';
 
 const API_BASE = 'https://api.themoviedb.org/3';
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -144,7 +144,43 @@ function parseMovie(raw: unknown): MovieSummary | null {
     voteAverage: num(r.vote_average),
     voteCount: num(r.vote_count),
     popularity: num(r.popularity),
+    genreIds: Array.isArray(r.genre_ids) ? r.genre_ids.filter((g): g is number => typeof g === 'number') : [],
   };
+}
+
+const asRecord = (v: unknown): Record<string, unknown> =>
+  typeof v === 'object' && v !== null ? (v as Record<string, unknown>) : {};
+const asArray = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+
+/** Keys end up in an iframe URL, so only accept the YouTube id alphabet. */
+const YOUTUBE_KEY = /^[\w-]{6,20}$/;
+
+function parseTrailerKey(videos: unknown): string | null {
+  const candidates = asArray(asRecord(videos).results)
+    .map(asRecord)
+    .filter((v) => v.site === 'YouTube' && v.type === 'Trailer' && typeof v.key === 'string' && YOUTUBE_KEY.test(v.key));
+  const best = candidates.find((v) => v.official === true) ?? candidates[0];
+  return best ? (best.key as string) : null;
+}
+
+function parseCast(credits: unknown): CastMember[] {
+  return asArray(asRecord(credits).cast)
+    .map(asRecord)
+    .flatMap((c): CastMember[] =>
+      typeof c.id === 'number' && typeof c.name === 'string' && c.name
+        ? [{ id: c.id, name: c.name, character: str(c.character), profilePath: optStr(c.profile_path) }]
+        : [],
+    )
+    .slice(0, 12);
+}
+
+function parseSimilar(similar: unknown): MovieSummary[] {
+  return asArray(asRecord(similar).results)
+    .flatMap((m) => {
+      const movie = parseMovie(m);
+      return movie ? [movie] : [];
+    })
+    .slice(0, 10);
 }
 
 function parseGenres(raw: unknown): Genre[] {
@@ -183,6 +219,8 @@ export interface ListQuery {
   year: string;
   sort: SortOption;
   page: number;
+  /** TMDB genre id as a string, or empty/undefined for any. Browse mode only (see hook for search). */
+  genre?: string;
 }
 
 const DISCOVER_SORT: Record<Exclude<SortOption, 'default'>, string> = {
@@ -208,7 +246,8 @@ export async function fetchMovies(q: ListQuery, signal?: AbortSignal): Promise<M
       await request('/search/movie', { query, page: q.page, primary_release_year: year, include_adult: 'false' }, signal),
     );
   }
-  if (!year && q.sort === 'default') {
+  const genre = /^\d{1,6}$/.test(q.genre ?? '') ? (q.genre as string) : '';
+  if (!year && !genre && q.sort === 'default') {
     return parsePage(await request('/trending/movie/week', { page: q.page }, signal));
   }
   const sort = q.sort === 'default' ? 'popularity' : q.sort;
@@ -220,6 +259,7 @@ export async function fetchMovies(q: ListQuery, signal?: AbortSignal): Promise<M
         page: q.page,
         sort_by: DISCOVER_SORT[sort],
         primary_release_year: year,
+        with_genres: genre,
         include_adult: 'false',
         'vote_count.gte': sort === 'rating' ? MIN_VOTES_FOR_RATING_SORT : undefined,
         // Don't surface unreleased titles when ordering by release date.
@@ -237,7 +277,8 @@ export function isValidMovieId(id: string | undefined): id is string {
 
 export async function fetchMovieDetails(id: string, signal?: AbortSignal): Promise<MovieDetails> {
   if (!isValidMovieId(id)) throw new TmdbError('not-found');
-  const data = await request(`/movie/${id}`, {}, signal);
+  // One request returns details + trailer + cast + similar titles (no N+1 calls).
+  const data = await request(`/movie/${id}`, { append_to_response: 'videos,credits,similar' }, signal);
   const base = parseMovie(data);
   if (!base) throw new TmdbError('invalid-response');
   const r = data as RawMovie;
@@ -247,5 +288,13 @@ export async function fetchMovieDetails(id: string, signal?: AbortSignal): Promi
     genres: parseGenres(r.genres),
     runtime: runtime > 0 ? runtime : null,
     tagline: str(r.tagline),
+    trailerKey: parseTrailerKey(r.videos),
+    cast: parseCast(r.credits),
+    similar: parseSimilar(r.similar).filter((m) => m.id !== base.id),
   };
+}
+
+export async function fetchGenres(signal?: AbortSignal): Promise<Genre[]> {
+  const data = await request('/genre/movie/list', {}, signal);
+  return parseGenres(asRecord(data).genres);
 }

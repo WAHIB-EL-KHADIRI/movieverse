@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
@@ -21,6 +21,49 @@ describe('Movie details page', () => {
     expect(genres).toHaveTextContent('Science Fiction');
     // Set in a passive effect, so it may land a tick after the DOM commit.
     await waitFor(() => expect(document.title).toBe('Alpha Rising · MovieVerse'));
+  });
+
+  it('loads the trailer only on demand, from the privacy-friendly YouTube domain', async () => {
+    const user = userEvent.setup();
+    renderApp('/movie/1');
+    await screen.findByRole('heading', { name: 'Alpha Rising', level: 1 });
+
+    expect(document.querySelector('iframe')).toBeNull(); // nothing loaded yet
+    await user.click(screen.getByRole('button', { name: /watch trailer/i }));
+    const frame = screen.getByTitle(/alpha rising — trailer/i);
+    expect(frame).toHaveAttribute('src', expect.stringMatching(/^https:\/\/www\.youtube-nocookie\.com\/embed\/OFFICIAL_ab-1\?/));
+
+    await user.click(screen.getByRole('button', { name: /close trailer/i }));
+    expect(document.querySelector('iframe')).toBeNull();
+  });
+
+  it('hides the trailer button when the movie has no trailer', async () => {
+    renderApp('/movie/3');
+    await screen.findByRole('heading', { name: 'Gamma Ray', level: 1 });
+    expect(screen.queryByRole('button', { name: /watch trailer/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /top cast/i })).not.toBeInTheDocument();
+  });
+
+  it('shows the top cast with a fallback avatar when there is no photo', async () => {
+    renderApp('/movie/1');
+    expect(await screen.findByRole('heading', { name: /top cast/i })).toBeInTheDocument();
+    expect(screen.getByText('Jane Doe')).toBeInTheDocument();
+    expect(screen.getByText('The Hero')).toBeInTheDocument();
+    expect(screen.getByText('John Smith')).toBeInTheDocument();
+    expect(screen.getByText('JS')).toBeInTheDocument(); // initials fallback
+    expect(screen.queryByText('Broken')).not.toBeInTheDocument();
+  });
+
+  it('lists similar movies (excluding the current one) and navigates to them', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/movie/1');
+    const grid = await screen.findByRole('list', { name: /similar movies/i });
+    expect(within(grid).queryByRole('heading', { name: 'Alpha Rising' })).not.toBeInTheDocument();
+
+    await user.click(within(grid).getByRole('link', { name: /beta protocol — view details/i }));
+    expect(await screen.findByRole('heading', { name: 'Beta Protocol', level: 1 })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/movie/2');
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
   });
 
   it.each(['abc', '0', '-5', '1.5'])('rejects invalid id "%s" without calling the API', async (id) => {

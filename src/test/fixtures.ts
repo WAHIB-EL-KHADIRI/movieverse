@@ -9,6 +9,7 @@ export interface RawFixture {
   vote_average: number;
   vote_count: number;
   popularity: number;
+  genre_ids: number[];
 }
 
 export const RAW_MOVIES: RawFixture[] = [
@@ -22,6 +23,7 @@ export const RAW_MOVIES: RawFixture[] = [
     vote_average: 7.2,
     vote_count: 900,
     popularity: 50,
+    genre_ids: [28],
   },
   {
     id: 2,
@@ -33,6 +35,7 @@ export const RAW_MOVIES: RawFixture[] = [
     vote_average: 8.9,
     vote_count: 4000,
     popularity: 10,
+    genre_ids: [18],
   },
   {
     id: 3,
@@ -44,7 +47,13 @@ export const RAW_MOVIES: RawFixture[] = [
     vote_average: 5.5,
     vote_count: 300,
     popularity: 99,
+    genre_ids: [28, 18],
   },
+];
+
+export const RAW_GENRES = [
+  { id: 28, name: 'Action' },
+  { id: 18, name: 'Drama' },
 ];
 
 export const RAW_DETAILS = {
@@ -55,4 +64,21 @@ export const RAW_DETAILS = {
     { id: 28, name: 'Action' },
     { id: 878, name: 'Science Fiction' },
   ],
+  videos: {
+    results: [
+      { key: 'vimeo-not-youtube', site: 'Vimeo', type: 'Trailer', official: true },
+      { key: 'teaser_only1', site: 'YouTube', type: 'Teaser', official: true },
+      { key: 'bad key!<script>', site: 'YouTube', type: 'Trailer', official: true },
+      { key: 'unofficial_1', site: 'YouTube', type: 'Trailer', official: false },
+      { key: 'OFFICIAL_ab-1', site: 'YouTube', type: 'Trailer', official: true },
+    ],
+  },
+  credits: {
+    cast: [
+      { id: 501, name: 'Jane Doe', character: 'The Hero', profile_path: '/jane.jpg' },
+      { id: 502, name: 'John Smith', character: '', profile_path: null },
+      { id: 'x', name: 'Broken' },
+    ],
+  },
+  similar: { results: [RAW_MOVIES[0], RAW_MOVIES[1], RAW_MOVIES[2], { id: 'bad' }] },
 };

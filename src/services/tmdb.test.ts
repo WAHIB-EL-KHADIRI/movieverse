@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { API, requestLog, server } from '../test/server';
-import { TmdbError, fetchMovieDetails, fetchMovies, isValidMovieId } from './tmdb';
+import { TmdbError, fetchGenres, fetchMovieDetails, fetchMovies, isValidMovieId } from './tmdb';
 
 const base = { query: '', year: '', sort: 'default', page: 1 } as const;
 
@@ -41,6 +41,27 @@ describe('tmdb service', () => {
     const page = await fetchMovies({ ...base, year: '2021' });
     expect(requestLog[0]).toContain('/discover/movie?');
     expect(page.results.map((m) => m.id)).toEqual([2]);
+  });
+
+  it('filters by genre through /discover, even with the default sort', async () => {
+    const page = await fetchMovies({ ...base, genre: '18' });
+    expect(requestLog[0]).toContain('/discover/movie?');
+    expect(requestLog[0]).toContain('with_genres=18');
+    expect(page.results.map((m) => m.id)).toEqual([3, 2]);
+  });
+
+  it('ignores a malformed genre', async () => {
+    await fetchMovies({ ...base, genre: '18;drop' });
+    expect(requestLog[0]).toContain('/trending/');
+  });
+
+  it('keeps genre ids on movies and loads the genre list', async () => {
+    const page = await fetchMovies(base);
+    expect(page.results[2]!.genreIds).toEqual([28, 18]);
+    expect(await fetchGenres()).toEqual([
+      { id: 28, name: 'Action' },
+      { id: 18, name: 'Drama' },
+    ]);
   });
 
   it('ignores a malformed year', async () => {
@@ -125,6 +146,35 @@ describe('movie details', () => {
     const movie = await fetchMovieDetails('1');
     expect(movie).toMatchObject({ id: 1, runtime: 135, tagline: 'It begins.' });
     expect(movie.genres.map((g) => g.name)).toEqual(['Action', 'Science Fiction']);
+  });
+
+  it('fetches trailer, cast and similar movies in a single request', async () => {
+    await fetchMovieDetails('1');
+    expect(requestLog).toEqual(['/movie/1?append_to_response=videos%2Ccredits%2Csimilar']);
+  });
+
+  it('picks the official YouTube trailer and rejects unsafe or non-trailer videos', async () => {
+    const movie = await fetchMovieDetails('1');
+    expect(movie.trailerKey).toBe('OFFICIAL_ab-1');
+  });
+
+  it('has no trailer when none is usable', async () => {
+    server.use(
+      http.get(`${API}/movie/1`, () =>
+        HttpResponse.json({ id: 1, title: 'X', videos: { results: [{ key: 'bad key', site: 'YouTube', type: 'Trailer' }] } }),
+      ),
+    );
+    const movie = await fetchMovieDetails('1');
+    expect(movie).toMatchObject({ trailerKey: null, cast: [], similar: [] });
+  });
+
+  it('maps cast (dropping malformed entries) and similar movies (excluding itself)', async () => {
+    const movie = await fetchMovieDetails('1');
+    expect(movie.cast).toEqual([
+      { id: 501, name: 'Jane Doe', character: 'The Hero', profilePath: '/jane.jpg' },
+      { id: 502, name: 'John Smith', character: '', profilePath: null },
+    ]);
+    expect(movie.similar.map((m) => m.id)).toEqual([2, 3]);
   });
 
   it('reports not-found for unknown ids', async () => {

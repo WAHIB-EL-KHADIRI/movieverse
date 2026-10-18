@@ -3,7 +3,10 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ErrorState } from '../components/feedback/ErrorState';
 import { DetailsSkeleton } from '../components/feedback/LoadingSkeleton';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
+import { CastList } from '../components/movies/CastList';
+import { MovieGrid } from '../components/movies/MovieGrid';
 import { Poster } from '../components/movies/Poster';
+import { TrailerPlayer } from '../components/movies/TrailerPlayer';
 import { Rating } from '../components/movies/Rating';
 import { useMovieDetails } from '../hooks/useMovieDetails';
 import { TmdbError, errorMessage, isValidMovieId } from '../services/tmdb';
@@ -14,6 +17,11 @@ export function MovieDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { movie, loading, error, retry } = useMovieDetails(movieId);
+
+  // Opening a "similar movie" reuses this route, so start from the top.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [movieId]);
 
   useEffect(() => {
     document.title = movie ? `${movie.title} · MovieVerse` : 'MovieVerse';
@@ -57,6 +65,7 @@ export function MovieDetailsPage() {
   const bg = backdropUrl(movie.backdropPath);
 
   return (
+    <>
     <article className="details" aria-labelledby="movie-title">
       {bg && <img className="details__bg" src={bg} alt="" decoding="async" />}
       <div className="details__shade" />
@@ -89,9 +98,24 @@ export function MovieDetailsPage() {
           )}
           <h2 className="details__subtitle">Overview</h2>
           <p className="details__overview">{movie.overview || 'No overview available for this movie.'}</p>
-          <FavoriteButton movie={movie} variant="full" />
+          <div className="actions">
+            <FavoriteButton movie={movie} variant="full" />
+            {movie.trailerKey && <TrailerPlayer videoKey={movie.trailerKey} title={movie.title} />}
+          </div>
         </div>
       </div>
     </article>
+
+    <CastList cast={movie.cast} />
+
+    {movie.similar.length > 0 && (
+      <section aria-labelledby="similar-title" className="extra">
+        <h2 id="similar-title" className="details__subtitle">
+          More like this
+        </h2>
+        <MovieGrid movies={movie.similar} label="Similar movies" />
+      </section>
+    )}
+    </>
   );
 }

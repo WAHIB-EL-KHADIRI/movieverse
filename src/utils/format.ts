@@ -35,6 +35,10 @@ export function posterUrl(path: string | null, size: PosterSize = 'w342'): strin
   return path ? `${IMAGE_BASE}/${size}${path}` : null;
 }
 
+export function profileUrl(path: string | null): string | null {
+  return path ? `${IMAGE_BASE}/w185${path}` : null;
+}
+
 export function backdropUrl(path: string | null, size: BackdropSize = 'w1280'): string | null {
   return path ? `${IMAGE_BASE}/${size}${path}` : null;
 }
