@@ -1,5 +1,7 @@
 # MovieVerse
 
+[![CI](https://github.com/WAHIB-EL-KHADIRI/movieverse/actions/workflows/ci.yml/badge.svg)](https://github.com/WAHIB-EL-KHADIRI/movieverse/actions/workflows/ci.yml)
+
 A fast, accessible movie-discovery app built with **React 19 + Vite + TypeScript**, powered by the public [TMDB API](https://developer.themoviedb.org/). Browse what's trending, search with debounce, filter by year, sort three ways, read details and keep a persistent list of favorites.
 
 > Frontend only. No backend, no database.
@@ -130,3 +132,7 @@ Deployed on **Netlify**. `netlify.toml` already contains the build command (`npm
 ## Attribution
 
 This product uses the TMDB API but is not endorsed or certified by TMDB. Movie data and images © TMDB and their respective owners.
+
+## License
+
+[MIT](LICENSE) (c) 2026 Wahib El Khadiri.
