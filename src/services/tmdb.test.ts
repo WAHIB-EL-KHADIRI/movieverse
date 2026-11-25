@@ -107,10 +107,22 @@ describe('tmdb service', () => {
     await expect(fetchMovies(base)).rejects.toMatchObject({ kind: 'network' });
   });
 
-  it('throws a config error without calling the network when the API key is missing', async () => {
-    vi.stubEnv('VITE_TMDB_API_KEY', '');
-    await expect(fetchMovies(base)).rejects.toMatchObject({ kind: 'config' });
-    expect(requestLog).toHaveLength(0);
+  it.each([
+    [500, 'config', 'config'],
+    [502, 'upstream_auth', 'auth'],
+  ])('maps proxy %i {error:%s} to "%s"', async (status, error, kind) => {
+    server.use(http.get(`${API}/trending/movie/week`, () => HttpResponse.json({ error }, { status })));
+    await expect(fetchMovies(base)).rejects.toMatchObject({ name: 'TmdbError', kind, status });
+  });
+
+  it('calls the same-origin proxy and never sends a key from the browser', async () => {
+    const urls: string[] = [];
+    server.use(http.get(`${API}/trending/movie/week`, ({ request }) => { urls.push(request.url); return HttpResponse.json({ page: 1, total_pages: 1, results: [] }); }));
+    await fetchMovies(base);
+    expect(urls).toHaveLength(1);
+    expect(new URL(urls[0]!).origin).toBe(window.location.origin);
+    expect(urls[0]).not.toContain('api_key');
+    expect(urls[0]).not.toContain('themoviedb.org');
   });
 
   it('times out slow requests', async () => {

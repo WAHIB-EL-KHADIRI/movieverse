@@ -9,7 +9,7 @@ Requires Node.js >= 20.19 and a free TMDB v3 API key (see the README).
 
 ```bash
 npm install
-cp .env.example .env   # then add your own VITE_TMDB_API_KEY
+cp .env.example .env   # then add your own TMDB_API_KEY (server-side only)
 npm run dev
 ```
 

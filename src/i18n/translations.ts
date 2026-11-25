@@ -154,8 +154,8 @@ export const en = {
   'palette.yearUnknown': 'Year unknown',
 
   'error.config':
-    'TMDB API key is missing. Copy .env.example to .env and set VITE_TMDB_API_KEY, then restart the dev server.',
-  'error.auth': 'TMDB rejected the API key. Check that VITE_TMDB_API_KEY is a valid v3 key.',
+    'The server has no TMDB API key. Set TMDB_API_KEY in .env (local) or in the Netlify environment variables, then restart.',
+  'error.auth': 'TMDB rejected the server API key. Check that TMDB_API_KEY is valid.',
   'error.not-found': 'We could not find what you were looking for.',
   'error.rate-limit': 'Too many requests to TMDB. Please wait a moment and try again.',
   'error.timeout': 'The request took too long. Check your connection and try again.',
@@ -315,8 +315,8 @@ export const fr: Dictionary = {
   'palette.yearUnknown': 'Année inconnue',
 
   'error.config':
-    'La clé API TMDB est absente. Copiez .env.example vers .env et renseignez VITE_TMDB_API_KEY, puis redémarrez le serveur de développement.',
-  'error.auth': 'TMDB a rejeté la clé API. Vérifiez que VITE_TMDB_API_KEY est une clé v3 valide.',
+    'Le serveur n’a pas de clé API TMDB. Renseignez TMDB_API_KEY dans .env (local) ou dans les variables d’environnement Netlify, puis redémarrez.',
+  'error.auth': 'TMDB a rejeté la clé API du serveur. Vérifiez que TMDB_API_KEY est valide.',
   'error.not-found': 'Nous n’avons pas trouvé ce que vous cherchiez.',
   'error.rate-limit': 'Trop de requêtes vers TMDB. Patientez un instant puis réessayez.',
   'error.timeout': 'La requête a pris trop de temps. Vérifiez votre connexion et réessayez.',
@@ -473,8 +473,8 @@ export const ar: Dictionary = {
   'palette.yearUnknown': 'السنة غير معروفة',
 
   'error.config':
-    'مفتاح TMDB API غير موجود. انسخ .env.example إلى .env وضع قيمة VITE_TMDB_API_KEY ثم أعد تشغيل خادم التطوير.',
-  'error.auth': 'رفض TMDB مفتاح الـ API. تأكد أن VITE_TMDB_API_KEY مفتاح v3 صالح.',
+    'لا يملك الخادم مفتاح TMDB API. ضع TMDB_API_KEY في ملف .env (محليًا) أو في متغيرات بيئة Netlify ثم أعد التشغيل.',
+  'error.auth': 'رفض TMDB مفتاح الـ API الخاص بالخادم. تأكد أن TMDB_API_KEY صالح.',
   'error.not-found': 'لم نعثر على ما تبحث عنه.',
   'error.rate-limit': 'طلبات كثيرة إلى TMDB. انتظر قليلاً ثم حاول مجدداً.',
   'error.timeout': 'استغرق الطلب وقتاً طويلاً. تحقق من اتصالك وحاول مجدداً.',

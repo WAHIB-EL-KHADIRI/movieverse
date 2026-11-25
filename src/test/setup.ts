@@ -11,7 +11,6 @@ beforeAll(() => server.listen({ onUnhandledFrame: 'error' }));
 
 beforeEach(() => {
   window.scrollTo = vi.fn(); // not implemented in jsdom
-  vi.stubEnv('VITE_TMDB_API_KEY', 'test-key');
   clearTmdbCache();
   requestLog.length = 0;
   window.localStorage.clear();
@@ -20,7 +19,6 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   server.resetHandlers();
-  vi.unstubAllEnvs();
 });
 
 afterAll(() => server.close());

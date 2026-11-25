@@ -1,6 +1,10 @@
 import type { CastMember, Genre, MovieDetails, MoviePage, MovieSummary, RawMovie, SortOption } from '../types/movie';
 
-const API_BASE = 'https://api.themoviedb.org/3';
+/**
+ * Same-origin proxy (netlify/functions/tmdb.mts in production, Vite middleware locally).
+ * The TMDB key never reaches the browser.
+ */
+const API_BASE = '/api/tmdb';
 const REQUEST_TIMEOUT_MS = 10_000;
 const CACHE_TTL_MS = 5 * 60_000;
 /** Below this vote count a rating is statistically meaningless (used for "Rating" discover sort). */
@@ -19,8 +23,8 @@ export type TmdbErrorKind =
 
 const ERROR_MESSAGES: Record<TmdbErrorKind, string> = {
   config:
-    'TMDB API key is missing. Copy .env.example to .env and set VITE_TMDB_API_KEY, then restart the dev server.',
-  auth: 'TMDB rejected the API key. Check that VITE_TMDB_API_KEY is a valid v3 key.',
+    'The server has no TMDB API key. Set TMDB_API_KEY in .env (local) or in the Netlify environment variables, then restart.',
+  auth: 'TMDB rejected the server API key. Check that TMDB_API_KEY is valid.',
   'not-found': 'We could not find what you were looking for.',
   'rate-limit': 'Too many requests to TMDB. Please wait a moment and try again.',
   timeout: 'The request took too long. Check your connection and try again.',
@@ -61,17 +65,11 @@ export function clearTmdbCache(): void {
 type Params = Record<string, string | number | undefined>;
 
 async function request(path: string, params: Params, signal?: AbortSignal): Promise<unknown> {
-  const apiKey = (import.meta.env.VITE_TMDB_API_KEY as string | undefined)?.trim();
-  if (!apiKey || apiKey === 'your_tmdb_v3_api_key_here') throw new TmdbError('config');
-
   const search = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') search.set(k, String(v));
-  // Cache key deliberately excludes the API key.
   const cacheKey = `${path}?${search.toString()}`;
   const hit = cache.get(cacheKey);
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.value;
-
-  search.set('api_key', apiKey);
 
   // Abort on the caller's signal OR after the timeout, and tell the two apart.
   const controller = new AbortController();
@@ -87,7 +85,7 @@ async function request(path: string, params: Params, signal?: AbortSignal): Prom
   try {
     let response: Response;
     try {
-      response = await fetch(`${API_BASE}${path}?${search.toString()}`, {
+      response = await fetch(new URL(`${API_BASE}${path}?${search.toString()}`, window.location.origin), {
         signal: controller.signal,
         headers: { Accept: 'application/json' },
       });
@@ -99,7 +97,9 @@ async function request(path: string, params: Params, signal?: AbortSignal): Prom
 
     if (!response.ok) {
       const s = response.status;
-      if (s === 401) throw new TmdbError('auth', s);
+      const code = await proxyErrorCode(response);
+      if (code === 'config') throw new TmdbError('config', s);
+      if (code === 'upstream_auth' || s === 401) throw new TmdbError('auth', s);
       if (s === 404) throw new TmdbError('not-found', s);
       if (s === 429) throw new TmdbError('rate-limit', s);
       if (s >= 500) throw new TmdbError('server', s);
@@ -119,6 +119,17 @@ async function request(path: string, params: Params, signal?: AbortSignal): Prom
   } finally {
     clearTimeout(timer);
     signal?.removeEventListener('abort', onCallerAbort);
+  }
+}
+
+/** The proxy answers errors with `{ "error": "<code>" }`; anything else → null. */
+async function proxyErrorCode(response: Response): Promise<string | null> {
+  try {
+    const body: unknown = await response.json();
+    const code = (body as { error?: unknown } | null)?.error;
+    return typeof code === 'string' ? code : null;
+  } catch {
+    return null;
   }
 }
 
