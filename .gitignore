@@ -25,3 +25,6 @@ Thumbs.db
 test-results
 playwright-report
 *.tsbuildinfo
+
+# Local Netlify folder
+.netlify
