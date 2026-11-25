@@ -57,10 +57,10 @@ describe('Trending page', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('explains how to fix a missing API key', async () => {
-    vi.stubEnv('VITE_TMDB_API_KEY', '');
+  it('explains how to fix a missing server API key', async () => {
+    server.use(http.get(`${API}/trending/movie/week`, () => HttpResponse.json({ error: 'config' }, { status: 500 })));
     renderApp();
-    expect(await screen.findByRole('alert')).toHaveTextContent(/VITE_TMDB_API_KEY/);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/TMDB_API_KEY/);
   });
 
   it('shows an empty state when the API returns no movies', async () => {

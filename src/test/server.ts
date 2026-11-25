@@ -2,10 +2,12 @@ import { delay, http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { RAW_DETAILS, RAW_GENRES, RAW_MOVIES } from './fixtures';
 import type { RawFixture } from './fixtures';
+import { validateRequest } from '../../server/tmdbProxy';
 
-export const API = 'https://api.themoviedb.org/3';
+/** The app talks to its own same-origin proxy; jsdom's origin is http://localhost:3000. */
+export const API = `${window.location.origin}/api/tmdb`;
 
-/** Every request the app made (path + query without api_key), for call-count assertions. */
+/** Every request the app made (path + query), for call-count assertions. */
 export const requestLog: string[] = [];
 
 const page = (results: RawFixture[]) => ({ page: 1, total_pages: 1, total_results: results.length, results });
@@ -49,7 +51,7 @@ export const handlers = [
   }),
 
   // Not logged in requestLog so call-order assertions about movie lists stay simple.
-  http.get(`${API}/genre/movie/list`, () => HttpResponse.json({ genres: RAW_GENRES })),
+  http.get(`${API}/genre/movie/list`, ({ request }) => (assertAllowedByProxy(new URL(request.url)), HttpResponse.json({ genres: RAW_GENRES }))),
 
   http.get(`${API}/movie/:id`, ({ request, params }) => {
     requestLog.push(logEntry(request));
@@ -62,8 +64,15 @@ export const handlers = [
 
 function logEntry(request: Request): string {
   const url = new URL(request.url);
-  url.searchParams.delete('api_key');
-  return `${url.pathname.replace('/3', '')}${url.search}`;
+  assertAllowedByProxy(url);
+  if (url.searchParams.has('api_key')) throw new Error('The browser must never send an api_key');
+  return `${url.pathname.replace('/api/tmdb', '')}${url.search}`;
 }
 
 export const server = setupServer(...handlers);
+
+/** Contract: every request the UI makes must pass the production proxy's allow-list. */
+function assertAllowedByProxy(url: URL): void {
+  const result = validateRequest(url);
+  if (result instanceof Response) throw new Error(`Proxy would reject ${url.pathname}${url.search} (${result.status})`);
+}

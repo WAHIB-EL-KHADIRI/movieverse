@@ -1,11 +1,13 @@
 # Security Policy
 
-MovieVerse is a frontend-only app. It has no backend and stores no user data
-on any server; favorites and preferences live in the visitor's own browser
-(`localStorage`). The only network calls are to the public TMDB API.
+MovieVerse stores no user data on any server; favorites and preferences live in
+the visitor's own browser (`localStorage`). The browser only talks to its own
+origin (`/api/tmdb/*`), TMDB's image CDN and youtube-nocookie.com (trailers).
 
-Note that `VITE_TMDB_API_KEY` is embedded in the built JavaScript by design
-(see the README). Use a dedicated TMDB key and never reuse one that matters.
+The TMDB credential (`TMDB_API_KEY`) exists only in the serverless proxy
+environment. The proxy allow-lists endpoints and parameters, rate-limits per IP
+and never returns the key. A strict Content-Security-Policy is enforced
+(see `server/securityHeaders.ts`).
 
 ## Reporting a vulnerability
 

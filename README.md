@@ -56,16 +56,16 @@ npm run dev               # http://localhost:5173
 ### Environment variables / TMDB API key
 
 1. Create an account at <https://www.themoviedb.org/> and request an API key at <https://www.themoviedb.org/settings/api>.
-2. Use the **"API Key" (v3)** value – a 32-character hex string – not the long "Read Access Token".
+2. Use either the **"API Key" (v3)** value (32 hex characters) or the v4 **"Read Access Token"** – both work.
 3. Put it in `.env`:
 
    ```env
-   VITE_TMDB_API_KEY=your_tmdb_v3_api_key_here
+   TMDB_API_KEY=your_tmdb_v3_api_key_here
    ```
 
 If the key is missing the app shows an explicit message explaining this instead of failing silently.
 
-> **Security note.** Every `VITE_*` variable is embedded in the built JavaScript and is therefore **public** to anyone using the site. `.env` keeps the key out of Git, not out of the browser. Use a key dedicated to this app and never use private tokens. A truly secret key would need a backend/proxy, which is out of scope for this frontend-only exercise. `.env` is git-ignored; only `.env.example` (placeholder) is committed.
+> **Security model.** The key is **server-side only**. The browser calls `/api/tmdb/*` on the same origin; a serverless proxy ([`netlify/functions/tmdb.mts`](netlify/functions/tmdb.mts) in production, the same code as Vite middleware in `dev`/`preview`) validates every request against an allow-list of endpoints and parameters, attaches the key, caches responses (in memory + Netlify CDN) and rate-limits per IP. The build fails if the key ever appears in the output, and `VITE_TMDB_API_KEY` is rejected because `VITE_*` variables are public. Security headers (strict CSP, HSTS, etc.) live in [`server/securityHeaders.ts`](server/securityHeaders.ts) and are emitted as `dist/_headers`.
 
 ## Commands
 
@@ -123,10 +123,10 @@ Details: `/movie/{id}?append_to_response=videos,credits,similar`; genre list: `/
 
 ## Deployment
 
-Deployed on **Netlify**. `netlify.toml` already contains the build command (`npm run build`), the publish directory (`dist`), Node 22, the single-page-app redirect (so `/favorites` and `/movie/:id` survive a refresh) and basic security headers.
+Deployed on **Netlify**. `netlify.toml` already contains the build command (`npm run build`), the publish directory (`dist`), Node 22, the single-page-app redirect (so `/favorites` and `/movie/:id` survive a refresh) and the functions directory. Security headers are generated into `dist/_headers` at build time.
 
 1. Netlify → *Add new site* → *Import an existing project* → pick this GitHub repository (private repositories work once the Netlify GitHub app has access to it).
-2. Before the first deploy, add the environment variable `VITE_TMDB_API_KEY` (*Site configuration → Environment variables*). It is baked in at build time, so changing it requires a new deploy.
+2. Add the environment variable `TMDB_API_KEY` (*Site configuration → Environment variables*, scope: Functions + Builds). It is read only by the serverless proxy; it is never shipped to browsers. Do **not** create `VITE_TMDB_API_KEY` (the build refuses it).
 3. Deploy. Every push to `main` redeploys automatically.
 
 ## Attribution
